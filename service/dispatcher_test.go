@@ -12,6 +12,7 @@ import (
 
 	"github.com/qa-dev/Universe/data"
 	"github.com/stretchr/testify/assert"
+	"time"
 )
 
 type FakeClosingBuffer struct {
@@ -94,6 +95,8 @@ func TestDispatcher_Run_Negative(t *testing.T) {
 
 	log.SetOutput(os.Stderr)
 	logVal := buf.String()
+
+	time.Sleep(1000)
 
 	assert.Contains(t, logVal, "No subscribers for event")
 }
