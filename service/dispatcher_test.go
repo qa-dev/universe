@@ -45,7 +45,7 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestNewDispatcher(t *testing.T) {
-	ch := make(chan data.Event)
+	ch := make(chan event.Event)
 	storage := data.NewStorage()
 	client := &http.Client{}
 	dsp := NewDispatcher(ch, storage, client)
@@ -57,7 +57,7 @@ func TestNewDispatcher(t *testing.T) {
 func TestDispatcher_Run(t *testing.T) {
 	requestUrl := "test_url"
 	requestData := []byte("{\"test\": \"test\"}")
-	ch := make(chan data.Event)
+	ch := make(chan event.Event)
 	storage := data.NewStorage()
 	subscrService := NewSubscribeService(storage)
 	eventService := NewEventService(ch)
@@ -67,14 +67,14 @@ func TestDispatcher_Run(t *testing.T) {
 	dsp := NewDispatcher(ch, storage, client)
 	assert.NotNil(t, dsp)
 	dsp.Run()
-	err := eventService.PushEvent("test.event", requestData)
+	err := eventService.Publish("test.event", requestData)
 	assert.NoError(t, err)
 }
 
 func TestDispatcher_Run_Negative(t *testing.T) {
 	requestUrl := "test_url"
 	requestData := []byte("{\"test\": \"test\"}")
-	ch := make(chan data.Event)
+	ch := make(chan event.Event)
 	storage := data.NewStorage()
 	subscrService := NewSubscribeService(storage)
 	eventService := NewEventService(ch)
@@ -84,13 +84,13 @@ func TestDispatcher_Run_Negative(t *testing.T) {
 	dsp := NewDispatcher(ch, storage, client)
 	assert.NotNil(t, dsp)
 	dsp.Run()
-	err := eventService.PushEvent("test.event", requestData)
+	err := eventService.Publish("test.event", requestData)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 
-	event := data.Event{Name: "", Payload: []byte("")}
+	event := event.Event{Name: "", Payload: []byte("")}
 	ch <- event
 
 	log.SetOutput(os.Stderr)
