@@ -22,7 +22,7 @@ func TestEventService_PushEvent(t *testing.T) {
 		assert.Equal(t, "test.event", e.Name, "Wrong event name generated")
 	}()
 
-	err := es.Publish("test.event", []byte("test"))
+	err := es.Publish(Event{"test.event", []byte("test")})
 	assert.NoError(t, err)
 }
 
@@ -30,7 +30,7 @@ func TestEventService_PushEvent_Blank(t *testing.T) {
 	channel := make(chan Event)
 	es := NewEventService(channel)
 
-	err := es.Publish("", []byte("test"))
+	err := es.Publish(Event{"", []byte("test")})
 
 	assert.Error(t, err)
 	assert.Equal(t, "BLANK EVENT NAME", err.Error())
