@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/qa-dev/Universe/data"
+	"github.com/qa-dev/universe/data"
 )
 
 type EventService struct {

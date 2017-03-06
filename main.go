@@ -5,9 +5,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/qa-dev/Universe/data"
-	"github.com/qa-dev/Universe/handlers"
-	"github.com/qa-dev/Universe/service"
+	"github.com/qa-dev/universe/data"
+	"github.com/qa-dev/universe/handlers"
+	"github.com/qa-dev/universe/service"
 )
 
 func main() {

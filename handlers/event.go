@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"unicode/utf8"
 
-	"github.com/qa-dev/Universe/service"
+	"github.com/qa-dev/universe/service"
 )
 
 type EventHandler struct {

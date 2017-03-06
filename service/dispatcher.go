@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/qa-dev/Universe/data"
+	"github.com/qa-dev/universe/data"
 )
 
 type ClientInterface interface {

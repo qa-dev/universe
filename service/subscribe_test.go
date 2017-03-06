@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/qa-dev/Universe/data"
+	"github.com/qa-dev/universe/data"
 	"github.com/stretchr/testify/assert"
 )
 

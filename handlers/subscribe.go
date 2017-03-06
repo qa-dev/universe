@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/qa-dev/Universe/data"
-	"github.com/qa-dev/Universe/service"
+	"github.com/qa-dev/universe/data"
+	"github.com/qa-dev/universe/service"
 )
 
 type SubscribeHandler struct {
