@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "0Tugz8gj9KqqVj6JLkXUA7BXas4=",
+			"path": "github.com/Sirupsen/logrus",
+			"revision": "0208149b40d863d2c1a2f8fe5753096a9cf2cc8b",
+			"revisionTime": "2017-02-27T12:44:09Z"
+		},
+		{
 			"checksumSHA1": "dvabztWVQX8f6oMLRyv4dLH+TGY=",
 			"path": "github.com/davecgh/go-spew/spew",
 			"revision": "346938d642f2ec3594ed81d874461961cd0faa76",
@@ -13,6 +19,12 @@
 			"path": "github.com/pmezard/go-difflib/difflib",
 			"revision": "792786c7400a136282c1664665ae0a8db921c6c2",
 			"revisionTime": "2016-01-10T10:55:54Z"
+		},
+		{
+			"checksumSHA1": "2tjJ0eQrZHGXncRkHSYwsfTDQh8=",
+			"path": "github.com/streadway/amqp",
+			"revision": "ce1c69d94c3efdb1f287015f851b17db8fa205b1",
+			"revisionTime": "2017-03-03T13:53:37Z"
 		},
 		{
 			"checksumSHA1": "K0crHygPTP42i1nLKWphSlvOQJw=",
@@ -43,6 +55,12 @@
 			"path": "github.com/stretchr/testify/mock",
 			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
 			"revisionTime": "2017-01-30T11:31:45Z"
+		},
+		{
+			"checksumSHA1": "Cr7PCm9qzQ42fegneTyZqJMKUqg=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "e48874b42435b4347fc52bdee0424a52abc974d7",
+			"revisionTime": "2017-03-02T21:05:23Z"
 		}
 	],
 	"rootPath": "github.com/qa-dev/universe"
