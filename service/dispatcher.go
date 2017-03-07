@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/qa-dev/universe/data"
+	"github.com/qa-dev/universe/event"
 )
 
 type ClientInterface interface {
@@ -13,12 +14,12 @@ type ClientInterface interface {
 }
 
 type Dispatcher struct {
-	ch         chan data.Event
+	ch         chan event.Event
 	storage    *data.Storage
 	httpClient ClientInterface
 }
 
-func NewDispatcher(ch chan data.Event, storage *data.Storage, client ClientInterface) *Dispatcher {
+func NewDispatcher(ch chan event.Event, storage *data.Storage, client ClientInterface) *Dispatcher {
 	return &Dispatcher{ch, storage, client}
 }
 
@@ -28,14 +29,14 @@ func (d *Dispatcher) Run() {
 
 func (d *Dispatcher) worker() {
 	for {
-		event := <-d.ch
+		e := <-d.ch
 
 		d.storage.Mutex.Lock()
 
-		if val, ok := d.storage.Data[event.Name]; ok {
+		if val, ok := d.storage.Data[e.Name]; ok {
 			for _, hookPath := range val {
-				log.Println("Sending event", event.Name, "to", hookPath)
-				req, err := http.NewRequest("POST", hookPath, bytes.NewBuffer(event.Payload))
+				log.Println("Sending event", e.Name, "to", hookPath)
+				req, err := http.NewRequest("POST", hookPath, bytes.NewBuffer(e.Payload))
 				req.Header.Set("Content-Type", "application/json")
 
 				resp, err := d.httpClient.Do(req)
@@ -43,11 +44,11 @@ func (d *Dispatcher) worker() {
 					log.Println(err.Error())
 					continue
 				}
-				log.Println("Status of sending event", event.Name, "is", resp.Status)
+				log.Println("Status of sending event", e.Name, "is", resp.Status)
 				resp.Body.Close()
 			}
 		} else {
-			log.Println("No subscribers for event", event.Name)
+			log.Println("No subscribers for event", e.Name)
 		}
 
 		d.storage.Mutex.Unlock()
