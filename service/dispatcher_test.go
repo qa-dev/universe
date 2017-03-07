@@ -10,6 +10,7 @@ import (
 
 	"github.com/qa-dev/universe/data"
 	"github.com/qa-dev/universe/subscribe"
+	"github.com/qa-dev/universe/event"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +44,7 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestNewDispatcher(t *testing.T) {
-	ch := make(chan data.Event)
+	ch := make(chan event.Event)
 	storage := data.NewStorage()
 	client := &http.Client{}
 	dsp := NewDispatcher(ch, storage, client)
@@ -55,17 +56,17 @@ func TestNewDispatcher(t *testing.T) {
 func TestDispatcher_Run(t *testing.T) {
 	requestUrl := "test_url"
 	requestData := []byte("{\"test\": \"test\"}")
-	ch := make(chan data.Event)
+	ch := make(chan event.Event)
 	storage := data.NewStorage()
 	subscrService := subscribe.NewSubscribeService(storage)
-	eventService := NewEventService(ch)
+	eventService := event.NewEventService(ch)
 	subscribeData := subscribe.Subscribe{EventName: "test.event", WebHookPath: requestUrl}
 	subscrService.ProcessSubscribe(subscribeData)
 	client := &FakePostClient{t, requestUrl, requestData}
 	dsp := NewDispatcher(ch, storage, client)
 	assert.NotNil(t, dsp)
 	dsp.Run()
-	err := eventService.PushEvent("test.event", requestData)
+	err := eventService.Publish(event.Event{"test.event", requestData})
 	assert.NoError(t, err)
 }
 

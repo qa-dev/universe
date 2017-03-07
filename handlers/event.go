@@ -5,14 +5,18 @@ import (
 	"net/http"
 	"unicode/utf8"
 
-	"github.com/qa-dev/universe/service"
+	"github.com/qa-dev/universe/event"
 )
 
 type EventHandler struct {
-	eventService *service.EventService
+	eventService EventPublisher
 }
 
-func NewEventHandler(eventService *service.EventService) *EventHandler {
+type EventPublisher interface {
+	Publish(event.Event) error
+}
+
+func NewEventHandler(eventService EventPublisher) *EventHandler {
 	return &EventHandler{eventService}
 }
 
@@ -22,7 +26,9 @@ func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	err = h.eventService.PushEvent(eventName, payload)
+
+	e := event.Event{eventName, payload}
+	err = h.eventService.Publish(e)
 	if err == nil {
 		resp.Write([]byte("OK"))
 	} else {

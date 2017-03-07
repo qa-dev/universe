@@ -1,4 +1,4 @@
-package data
+package event
 
 type Event struct {
 	Name    string `json:"name"`
