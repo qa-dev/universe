@@ -2,11 +2,11 @@ package service
 
 import (
 	"bytes"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"net/http"
 
-	"github.com/qa-dev/universe/data"
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/storage"
 )
 
 type ClientInterface interface {
@@ -15,11 +15,11 @@ type ClientInterface interface {
 
 type Dispatcher struct {
 	ch         chan event.Event
-	storage    *data.Storage
+	storage    *storage.Storage
 	httpClient ClientInterface
 }
 
-func NewDispatcher(ch chan event.Event, storage *data.Storage, client ClientInterface) *Dispatcher {
+func NewDispatcher(ch chan event.Event, storage *storage.Storage, client ClientInterface) *Dispatcher {
 	return &Dispatcher{ch, storage, client}
 }
 

@@ -2,7 +2,7 @@ package event
 
 import (
 	"errors"
-	"log"
+	log "github.com/Sirupsen/logrus"
 )
 
 type EventService struct {
