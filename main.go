@@ -1,25 +1,25 @@
 package main
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"net"
 	"net/http"
 
-	"github.com/qa-dev/universe/data"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/handlers"
 	"github.com/qa-dev/universe/service"
+	"github.com/qa-dev/universe/storage"
 	"github.com/qa-dev/universe/subscribe"
 )
 
 func main() {
 	listenPort := "9713"
 	c := make(chan event.Event)
-	storage := data.NewStorage()
+	storageUnit := storage.NewStorage()
 	eventService := event.NewEventService(c)
-	subscribeService := subscribe.NewSubscribeService(storage)
+	subscribeService := subscribe.NewSubscribeService(storageUnit)
 	httpClient := &http.Client{}
-	dispatcher := service.NewDispatcher(c, storage, httpClient)
+	dispatcher := service.NewDispatcher(c, storageUnit, httpClient)
 	dispatcher.Run()
 
 	mux := http.NewServeMux()

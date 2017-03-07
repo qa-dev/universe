@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/qa-dev/universe/data"
-	"github.com/qa-dev/universe/subscribe"
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/storage"
+	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,11 +45,11 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 
 func TestNewDispatcher(t *testing.T) {
 	ch := make(chan event.Event)
-	storage := data.NewStorage()
+	storageUnit := storage.NewStorage()
 	client := &http.Client{}
-	dsp := NewDispatcher(ch, storage, client)
+	dsp := NewDispatcher(ch, storageUnit, client)
 	assert.Equal(t, fmt.Sprintf("%p", ch), fmt.Sprintf("%p", dsp.ch))
-	assert.Equal(t, fmt.Sprintf("%p", storage), fmt.Sprintf("%p", dsp.storage))
+	assert.Equal(t, fmt.Sprintf("%p", storageUnit), fmt.Sprintf("%p", dsp.storage))
 	assert.Equal(t, fmt.Sprintf("%p", client), fmt.Sprintf("%p", dsp.httpClient))
 }
 
@@ -57,13 +57,13 @@ func TestDispatcher_Run(t *testing.T) {
 	requestUrl := "test_url"
 	requestData := []byte("{\"test\": \"test\"}")
 	ch := make(chan event.Event)
-	storage := data.NewStorage()
-	subscrService := subscribe.NewSubscribeService(storage)
+	storageUnit := storage.NewStorage()
+	subscrService := subscribe.NewSubscribeService(storageUnit)
 	eventService := event.NewEventService(ch)
 	subscribeData := subscribe.Subscribe{EventName: "test.event", WebHookPath: requestUrl}
 	subscrService.ProcessSubscribe(subscribeData)
 	client := &FakePostClient{t, requestUrl, requestData}
-	dsp := NewDispatcher(ch, storage, client)
+	dsp := NewDispatcher(ch, storageUnit, client)
 	assert.NotNil(t, dsp)
 	dsp.Run()
 	err := eventService.Publish(event.Event{"test.event", requestData})

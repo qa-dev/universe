@@ -2,16 +2,16 @@ package subscribe
 
 import (
 	"errors"
-	"log"
+	log "github.com/Sirupsen/logrus"
 
-	"github.com/qa-dev/universe/data"
+	"github.com/qa-dev/universe/storage"
 )
 
 type SubscribeService struct {
-	storage *data.Storage
+	storage *storage.Storage
 }
 
-func NewSubscribeService(storage *data.Storage) *SubscribeService {
+func NewSubscribeService(storage *storage.Storage) *SubscribeService {
 	return &SubscribeService{storage}
 }
 

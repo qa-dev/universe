@@ -1,6 +1,6 @@
 package observer
 
-import "log"
+import log "github.com/Sirupsen/logrus"
 
 type Observer interface {
 	Notify(v interface{}) error
