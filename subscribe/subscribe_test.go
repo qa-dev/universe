@@ -1,4 +1,4 @@
-package service
+package subscribe
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func TestNewSubscribeService(t *testing.T) {
 func TestSubscribeService_ProcessSubscribe(t *testing.T) {
 	storage := data.NewStorage()
 	subscribeService := NewSubscribeService(storage)
-	subscribe := data.Subscribe{EventName: "test.event", WebHookPath: "testpath"}
+	subscribe := Subscribe{EventName: "test.event", WebHookPath: "testpath"}
 	assert.Equal(t, 0, len(subscribeService.storage.Data))
 	err := subscribeService.ProcessSubscribe(subscribe)
 	assert.NoError(t, err)
@@ -27,7 +27,7 @@ func TestSubscribeService_ProcessSubscribe(t *testing.T) {
 func TestSubscribeService_ProcessSubscribe_BlankEventName(t *testing.T) {
 	storage := data.NewStorage()
 	subscribeService := NewSubscribeService(storage)
-	subscribe := data.Subscribe{EventName: "", WebHookPath: "testpath"}
+	subscribe := Subscribe{EventName: "", WebHookPath: "testpath"}
 	err := subscribeService.ProcessSubscribe(subscribe)
 	assert.Error(t, err)
 	assert.Equal(t, "BLANK EVENT NAME", err.Error())
@@ -36,7 +36,7 @@ func TestSubscribeService_ProcessSubscribe_BlankEventName(t *testing.T) {
 func TestSubscribeService_ProcessSubscribe_BlankWebHook(t *testing.T) {
 	storage := data.NewStorage()
 	subscribeService := NewSubscribeService(storage)
-	subscribe := data.Subscribe{EventName: "test.event", WebHookPath: ""}
+	subscribe := Subscribe{EventName: "test.event", WebHookPath: ""}
 	err := subscribeService.ProcessSubscribe(subscribe)
 	assert.Error(t, err)
 	assert.Equal(t, "BLANK WEBHOOK PATH", err.Error())

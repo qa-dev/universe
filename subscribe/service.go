@@ -1,4 +1,4 @@
-package service
+package subscribe
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ func NewSubscribeService(storage *data.Storage) *SubscribeService {
 	return &SubscribeService{storage}
 }
 
-func (s *SubscribeService) ProcessSubscribe(subscribe data.Subscribe) error {
+func (s *SubscribeService) ProcessSubscribe(subscribe Subscribe) error {
 	if len(subscribe.EventName) == 0 {
 		log.Println("Got blank subscribe event name")
 		return errors.New("BLANK EVENT NAME")

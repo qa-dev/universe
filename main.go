@@ -8,13 +8,14 @@ import (
 	"github.com/qa-dev/universe/data"
 	"github.com/qa-dev/universe/handlers"
 	"github.com/qa-dev/universe/service"
+	"github.com/qa-dev/universe/subscribe"
 )
 
 func main() {
 	listenPort := "9713"
 	c := make(chan data.Event)
 	storage := data.NewStorage()
-	subscribeService := service.NewSubscribeService(storage)
+	subscribeService := subscribe.NewSubscribeService(storage)
 	eventService := service.NewEventService(c)
 	httpClient := &http.Client{}
 	dispatcher := service.NewDispatcher(c, storage, httpClient)
