@@ -5,22 +5,21 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/qa-dev/universe/data"
-	"github.com/qa-dev/universe/service"
+	"github.com/qa-dev/universe/subscribe"
 )
 
 type SubscribeHandler struct {
-	subscribeService *service.SubscribeService
+	subscribeService *subscribe.SubscribeService
 }
 
-func NewSubscribeHandler(subscribeService *service.SubscribeService) *SubscribeHandler {
+func NewSubscribeHandler(subscribeService *subscribe.SubscribeService) *SubscribeHandler {
 	return &SubscribeHandler{subscribeService}
 }
 
 func (h *SubscribeHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
-	var subscribe data.Subscribe
-	err := decoder.Decode(&subscribe)
+	var subscribeData subscribe.Subscribe
+	err := decoder.Decode(&subscribeData)
 	if err != nil {
 		log.Println("Bad subscribe request")
 		resp.Write([]byte("FAIL: BAD REQUEST"))
@@ -28,7 +27,7 @@ func (h *SubscribeHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request
 	}
 	defer req.Body.Close()
 
-	err = h.subscribeService.ProcessSubscribe(subscribe)
+	err = h.subscribeService.ProcessSubscribe(subscribeData)
 	if err == nil {
 		resp.Write([]byte("OK"))
 	} else {
