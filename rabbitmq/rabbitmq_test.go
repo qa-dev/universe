@@ -3,19 +3,21 @@ package rabbitmq
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/qa-dev/universe/config"
+	"github.com/stretchr/testify/assert"
 )
 
 var amqpUri string
 
 func init() {
-	amqpUri = os.Getenv("AMQP_URI")
+	config.SetTestDitectory()
+	amqpUri = config.LoadConfig().GetString("rmq.uri")
 	if amqpUri == "" {
-		log.Fatal("AMQP_URI is required to run rabbitmq tests")
+		log.Fatal("rmq.uri is required to run rabbitmq tests")
 	}
 }
 
@@ -27,7 +29,7 @@ func TestNewRabbitMQ(t *testing.T) {
 	defer rmq.Close()
 
 	// Даем время на подключение
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(5 * time.Second)
 
 	assert.NotNil(t, rmq.connection, "rmq.Connection is nil")
 	assert.NotNil(t, rmq.channel, "rmq.Channel is nil")
@@ -40,7 +42,7 @@ func TestRabbitMQ_Close(t *testing.T) {
 	rmq := NewRabbitMQ(amqpUri, queueName)
 
 	// Даем время на подключение
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(5 * time.Second)
 
 	a.NotNil(rmq.connection, "rmq.Connection is nil")
 	a.NotNil(rmq.channel, "rmq.Channel is nil")
@@ -58,7 +60,7 @@ func TestRabbitMQ_DeclareQueue(t *testing.T) {
 	defer rmq.Close()
 
 	// Даем время на подключение
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(5 * time.Second)
 
 	q, err := rmq.DeclareQueue(queueName)
 	a.NoError(err, "Unexpected error from DeclareQueue")
@@ -76,7 +78,7 @@ func TestRabbitMQ_PublishWithPriority(t *testing.T) {
 	defer rmq.Close()
 
 	// Даем время на подключение
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(5 * time.Second)
 
 	expectedMsg := map[string]string{
 		"key": "value",
@@ -108,7 +110,7 @@ func TestRabbitMQ_Consume(t *testing.T) {
 	defer rmq.Close()
 
 	// Даем время на подключение
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(5 * time.Second)
 
 	msgs, err := rmq.Consume(workerName)
 	a.NoError(err, "Unexpected error from Consume")

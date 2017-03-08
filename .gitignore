@@ -25,3 +25,5 @@ _testmain.go
 
 .idea
 .vscode
+/acc.out
+/profile.out

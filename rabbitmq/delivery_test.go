@@ -1,11 +1,17 @@
 package rabbitmq
 
 import (
+	"testing"
+
+	"github.com/qa-dev/universe/config"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
 )
+
+func init() {
+	config.SetTestDitectory()
+}
 
 // Реализуем интерфейс amqp.Acknowledger
 type MockAcknowledger struct {

@@ -2,6 +2,6 @@ app:
   host: ~
   port: 9713
 
-rabbitmq:
-  host: 127.0.0.1
-  port: 5672
+rmq:
+  uri: "amqp://guest:guest@127.0.0.1:5672/"
+  event_queue: "events"

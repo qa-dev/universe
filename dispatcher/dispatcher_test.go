@@ -1,4 +1,4 @@
-package service
+package dispatcher
 
 import (
 	"bytes"
@@ -8,11 +8,19 @@ import (
 	"net/http"
 	"testing"
 
+	"time"
+
+	"github.com/qa-dev/universe/config"
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/storage"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	config.SetTestDitectory()
+}
 
 type FakeClosingBuffer struct {
 	*bytes.Buffer
@@ -44,26 +52,32 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestNewDispatcher(t *testing.T) {
-	ch := make(chan event.Event)
+	rmq := rabbitmq.NewRabbitMQ(config.LoadConfig().GetString("rmq.uri"), "test_event_service_push_event_queue")
+	defer rmq.Close()
+	// Даем время на подключение
+	time.Sleep(5 * time.Second)
 	storageUnit := storage.NewStorage()
 	client := &http.Client{}
-	dsp := NewDispatcher(ch, storageUnit, client)
-	assert.Equal(t, fmt.Sprintf("%p", ch), fmt.Sprintf("%p", dsp.ch))
+	dsp := NewDispatcher(rmq, storageUnit, client)
+	assert.Equal(t, fmt.Sprintf("%p", rmq), fmt.Sprintf("%p", dsp.rmq))
 	assert.Equal(t, fmt.Sprintf("%p", storageUnit), fmt.Sprintf("%p", dsp.storage))
 	assert.Equal(t, fmt.Sprintf("%p", client), fmt.Sprintf("%p", dsp.httpClient))
 }
 
 func TestDispatcher_Run(t *testing.T) {
+	rmq := rabbitmq.NewRabbitMQ(config.LoadConfig().GetString("rmq.uri"), "test_event_service_push_event_queue")
+	defer rmq.Close()
+	// Даем время на подключение
+	time.Sleep(5 * time.Second)
 	requestUrl := "test_url"
 	requestData := []byte("{\"test\": \"test\"}")
-	ch := make(chan event.Event)
 	storageUnit := storage.NewStorage()
 	subscrService := subscribe.NewSubscribeService(storageUnit)
-	eventService := event.NewEventService(ch)
+	eventService := event.NewEventService(rmq)
 	subscribeData := subscribe.Subscribe{EventName: "test.event", WebHookPath: requestUrl}
 	subscrService.ProcessSubscribe(subscribeData)
 	client := &FakePostClient{t, requestUrl, requestData}
-	dsp := NewDispatcher(ch, storageUnit, client)
+	dsp := NewDispatcher(rmq, storageUnit, client)
 	assert.NotNil(t, dsp)
 	dsp.Run()
 	err := eventService.Publish(event.Event{"test.event", requestData})

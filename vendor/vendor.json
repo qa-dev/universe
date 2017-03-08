@@ -87,6 +87,12 @@
 			"revisionTime": "2017-03-07T20:11:23Z"
 		},
 		{
+			"checksumSHA1": "Se195FlZ160eaEk/uVx4KdTPSxU=",
+			"path": "github.com/pborman/uuid",
+			"revision": "1b00554d822231195d1babd97ff4a781231955c9",
+			"revisionTime": "2017-01-12T15:04:04Z"
+		},
+		{
 			"checksumSHA1": "F1IYMLBLAZaTOWnmXsgaxTGvrWI=",
 			"path": "github.com/pelletier/go-buffruneio",
 			"revision": "c37440a7cf42ac63b919c752ca73a85067e05992",

@@ -3,12 +3,14 @@ package main
 import (
 	"net"
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/config"
+	"github.com/qa-dev/universe/dispatcher"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/handlers"
-	"github.com/qa-dev/universe/service"
+	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/storage"
 	"github.com/qa-dev/universe/subscribe"
 )
@@ -17,13 +19,15 @@ func main() {
 	cfg := config.LoadConfig()
 	listenHost := cfg.GetString("app.host")
 	listenPort := cfg.GetString("app.port")
-	c := make(chan event.Event)
+	eventRmq := rabbitmq.NewRabbitMQ(cfg.GetString("rmq.uri"), cfg.GetString("rmq.event_queue"))
+	time.Sleep(5 * time.Second)
+	defer eventRmq.Close()
 	storageUnit := storage.NewStorage()
-	eventService := event.NewEventService(c)
+	eventService := event.NewEventService(eventRmq)
 	subscribeService := subscribe.NewSubscribeService(storageUnit)
 	httpClient := &http.Client{}
-	dispatcher := service.NewDispatcher(c, storageUnit, httpClient)
-	dispatcher.Run()
+	dispatcherService := dispatcher.NewDispatcher(eventRmq, storageUnit, httpClient)
+	dispatcherService.Run()
 
 	mux := http.NewServeMux()
 
