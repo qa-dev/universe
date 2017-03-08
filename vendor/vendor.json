@@ -3,6 +3,36 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "6leoxaCiZRgTXCqQI6RS5PlJ6w8=",
+			"path": "github.com/NeowayLabs/wabbit",
+			"revision": "12f561dfe376ebb1ec4d230d7dace89ba51bb456",
+			"revisionTime": "2017-01-08T16:06:04Z"
+		},
+		{
+			"checksumSHA1": "YoUsJN3FPZ9OzzKQ1hd903JW+QE=",
+			"path": "github.com/NeowayLabs/wabbit/amqp",
+			"revision": "12f561dfe376ebb1ec4d230d7dace89ba51bb456",
+			"revisionTime": "2017-01-08T16:06:04Z"
+		},
+		{
+			"checksumSHA1": "0iyqHBCEsv+4qZsuE7qN0Yp4pLI=",
+			"path": "github.com/NeowayLabs/wabbit/amqptest",
+			"revision": "12f561dfe376ebb1ec4d230d7dace89ba51bb456",
+			"revisionTime": "2017-01-08T16:06:04Z"
+		},
+		{
+			"checksumSHA1": "fcbGYcjaqmeF2bLbJL7YoA71d9A=",
+			"path": "github.com/NeowayLabs/wabbit/amqptest/server",
+			"revision": "12f561dfe376ebb1ec4d230d7dace89ba51bb456",
+			"revisionTime": "2017-01-08T16:06:04Z"
+		},
+		{
+			"checksumSHA1": "7dNiCQPs/5UIoh7UGA3X0f2TV4U=",
+			"path": "github.com/NeowayLabs/wabbit/utils",
+			"revision": "12f561dfe376ebb1ec4d230d7dace89ba51bb456",
+			"revisionTime": "2017-01-08T16:06:04Z"
+		},
+		{
 			"checksumSHA1": "0Tugz8gj9KqqVj6JLkXUA7BXas4=",
 			"path": "github.com/Sirupsen/logrus",
 			"revision": "0208149b40d863d2c1a2f8fe5753096a9cf2cc8b",
@@ -85,6 +115,12 @@
 			"path": "github.com/mitchellh/mapstructure",
 			"revision": "53818660ed4955e899c0bcafa97299a388bd7c8e",
 			"revisionTime": "2017-03-07T20:11:23Z"
+		},
+		{
+			"checksumSHA1": "Se195FlZ160eaEk/uVx4KdTPSxU=",
+			"path": "github.com/pborman/uuid",
+			"revision": "1b00554d822231195d1babd97ff4a781231955c9",
+			"revisionTime": "2017-01-12T15:04:04Z"
 		},
 		{
 			"checksumSHA1": "F1IYMLBLAZaTOWnmXsgaxTGvrWI=",

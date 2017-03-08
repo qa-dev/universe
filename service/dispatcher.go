@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"net/http"
 
+	"encoding/json"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/storage"
 )
 
@@ -14,13 +17,13 @@ type ClientInterface interface {
 }
 
 type Dispatcher struct {
-	ch         chan event.Event
+	rmq        *rabbitmq.RabbitMQ
 	storage    *storage.Storage
 	httpClient ClientInterface
 }
 
-func NewDispatcher(ch chan event.Event, storage *storage.Storage, client ClientInterface) *Dispatcher {
-	return &Dispatcher{ch, storage, client}
+func NewDispatcher(rmq *rabbitmq.RabbitMQ, storage *storage.Storage, client ClientInterface) *Dispatcher {
+	return &Dispatcher{rmq, storage, client}
 }
 
 func (d *Dispatcher) Run() {
@@ -28,8 +31,18 @@ func (d *Dispatcher) Run() {
 }
 
 func (d *Dispatcher) worker() {
+	consumeObj, err := d.rmq.Consume("consumer")
+	if err != nil {
+		panic(err)
+	}
+
 	for {
-		e := <-d.ch
+		rawData := <-consumeObj
+		var e event.Event
+		err = json.Unmarshal(rawData.Body(), &e)
+		if err != nil {
+			panic(err)
+		}
 
 		d.storage.Mutex.Lock()
 
@@ -52,5 +65,7 @@ func (d *Dispatcher) worker() {
 		}
 
 		d.storage.Mutex.Unlock()
+
+		rawData.Ack(false)
 	}
 }

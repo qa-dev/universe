@@ -1,10 +1,13 @@
 package event
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/qa-dev/universe/config"
+	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,27 +16,39 @@ func init() {
 }
 
 func TestNewEventService(t *testing.T) {
-	channel := make(chan Event)
-	es := NewEventService(channel)
-	assert.Equal(t, fmt.Sprintf("%p", channel), fmt.Sprintf("%p", es.ch))
+	rmq := &rabbitmq.RabbitMQ{}
+	es := NewEventService(rmq)
+	assert.Equal(t, fmt.Sprintf("%p", rmq), fmt.Sprintf("%p", es.rmq))
 }
 
 func TestEventService_PushEvent(t *testing.T) {
-	channel := make(chan Event)
-	es := NewEventService(channel)
+	rmq := rabbitmq.NewRabbitMQ(config.LoadConfig().GetString("rmq.uri"), "test_event_service_push_event_queue")
+	defer rmq.Close()
+	// Даем время на подключение
+	time.Sleep(5 * time.Second)
+	es := NewEventService(rmq)
+
+	consumeObj, err := rmq.Consume("test_consumer")
+	assert.NoError(t, err)
 
 	go func() {
-		e := <-channel
+		raw := <-consumeObj
+		var e Event
+		err = json.Unmarshal(raw.Body(), &e)
+		assert.NoError(t, err)
 		assert.Equal(t, "test.event", e.Name, "Wrong event name generated")
 	}()
 
-	err := es.Publish(Event{"test.event", []byte("test")})
+	err = es.Publish(Event{"test.event", []byte("test")})
 	assert.NoError(t, err)
 }
 
 func TestEventService_PushEvent_Blank(t *testing.T) {
-	channel := make(chan Event)
-	es := NewEventService(channel)
+	rmq := rabbitmq.NewRabbitMQ(config.LoadConfig().GetString("rmq.uri"), "test_event_service_push_event_queue")
+	defer rmq.Close()
+	// Даем время на подключение
+	time.Sleep(5 * time.Second)
+	es := NewEventService(rmq)
 
 	err := es.Publish(Event{"", []byte("test")})
 
