@@ -8,11 +8,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/qa-dev/universe/config"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/storage"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	config.SetTestDitectory()
+}
 
 type FakeClosingBuffer struct {
 	*bytes.Buffer

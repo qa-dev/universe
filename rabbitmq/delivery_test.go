@@ -5,7 +5,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
+	"github.com/qa-dev/universe/config"
 )
+
+func init() {
+	config.SetTestDitectory()
+}
 
 // Реализуем интерфейс amqp.Acknowledger
 type MockAcknowledger struct {

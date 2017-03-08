@@ -5,7 +5,8 @@ for Dir in $(go list ./...);
 do
     if [[ ${Dir} != *"/vendor/"* ]]
     then
-        returnval=`go test -coverprofile=profile.out $Dir`
+    	Cwd=`pwd`
+        returnval=`go test -coverprofile=profile.out $Dir --workdir=$Cwd`
         echo ${returnval}
         if [[ ${returnval} != *FAIL* ]]
         then

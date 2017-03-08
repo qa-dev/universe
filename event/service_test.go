@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/qa-dev/universe/config"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	config.SetTestDitectory()
+}
 
 func TestNewEventService(t *testing.T) {
 	channel := make(chan Event)

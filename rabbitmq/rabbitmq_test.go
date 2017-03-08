@@ -3,17 +3,19 @@ package rabbitmq
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/qa-dev/universe/config"
+	"github.com/stretchr/testify/assert"
 )
 
 var amqpUri string
 
 func init() {
-	amqpUri = os.Getenv("AMQP_URI")
+	config.SetTestDitectory()
+	amqpUri = config.LoadConfig().GetString("rabbitmq.uri")
 	if amqpUri == "" {
 		log.Fatal("AMQP_URI is required to run rabbitmq tests")
 	}

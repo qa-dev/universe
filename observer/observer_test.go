@@ -3,11 +3,16 @@ package observer
 import (
 	"testing"
 
+	"github.com/qa-dev/universe/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 var testMsg = "test"
+
+func init() {
+	config.SetTestDitectory()
+}
 
 type MockObserver struct {
 	a *assert.Assertions

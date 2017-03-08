@@ -4,9 +4,14 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/qa-dev/universe/config"
 	"github.com/qa-dev/universe/storage"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	config.SetTestDitectory()
+}
 
 func TestNewSubscribeService(t *testing.T) {
 	storageUnit := storage.NewStorage()

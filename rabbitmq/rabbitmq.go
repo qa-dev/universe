@@ -2,9 +2,10 @@ package rabbitmq
 
 import (
 	"encoding/json"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/streadway/amqp"
-	"time"
 )
 
 const QueueMaxPriority int16 = 255
