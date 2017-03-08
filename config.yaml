@@ -1,6 +1,6 @@
 app:
-  host: ""
-  port: "9713"
+  host: ~
+  port: 9713
 
 rabbitmq:
   host: 127.0.0.1
