@@ -1,10 +1,9 @@
-package service
+package dispatcher
 
 import (
 	"bytes"
-	"net/http"
-
 	"encoding/json"
+	"net/http"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
