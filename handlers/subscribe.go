@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/subscribe"
 )
 

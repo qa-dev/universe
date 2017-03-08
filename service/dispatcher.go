@@ -2,9 +2,9 @@ package service
 
 import (
 	"bytes"
-	log "github.com/Sirupsen/logrus"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/storage"
 )

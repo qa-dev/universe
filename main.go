@@ -1,10 +1,11 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"net"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/qa-dev/universe/config"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/handlers"
 	"github.com/qa-dev/universe/service"
@@ -13,7 +14,9 @@ import (
 )
 
 func main() {
-	listenPort := "9713"
+	cfg := config.LoadConfig()
+	listenHost := cfg.GetString("app.host")
+	listenPort := cfg.GetString("app.port")
 	c := make(chan event.Event)
 	storageUnit := storage.NewStorage()
 	eventService := event.NewEventService(c)
@@ -24,8 +27,10 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/event/", handlers.NewEventHandler(eventService))
+	mux.Handle("/e/", handlers.NewEventHandler(eventService))
 	mux.Handle("/subscribe", handlers.NewSubscribeHandler(subscribeService))
 
-	log.Fatal(http.ListenAndServe(net.JoinHostPort("", listenPort), mux))
+	listenData := net.JoinHostPort(listenHost, listenPort)
+	log.Info("App listen at ", listenData)
+	log.Fatal(http.ListenAndServe(listenData, mux))
 }
