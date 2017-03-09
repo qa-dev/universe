@@ -21,7 +21,7 @@ func NewEventHandler(eventService EventPublisher) *EventHandler {
 }
 
 func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	eventName := req.RequestURI[utf8.RuneCountInString("/event/"):]
+	eventName := req.RequestURI[utf8.RuneCountInString("/e"):]
 	payload, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		panic(err)
@@ -30,7 +30,7 @@ func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	e := event.Event{eventName, payload}
 	err = h.eventService.Publish(e)
 	if err == nil {
-		resp.Write([]byte("OK"))
+		resp.Write([]byte("OK!"))
 	} else {
 		resp.Write([]byte("FAIL:" + err.Error()))
 	}

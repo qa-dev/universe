@@ -1,37 +1,15 @@
 package config
 
-import (
-	"flag"
-	"os"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/viper"
-)
-
-var cwd_arg = flag.String("workdir", "", "set workdir")
-
-func LoadConfig() *viper.Viper {
-	cfg := viper.New()
-	cfg.SetConfigName("config")
-	cfg.SetConfigType("yaml")
-	cfg.AddConfigPath(".")
-	err := cfg.ReadInConfig()
-	if err != nil {
-		panic(err)
-	}
-	cfg.WatchConfig()
-	cfg.OnConfigChange(func(e fsnotify.Event) {
-		log.Info("Config file changed: ", e.Name)
-	})
-	return cfg
+type App struct {
+	Host string `json:"host"`
+	Port uint   `json:"port"`
+}
+type Rmq struct {
+	Uri        string `json:"uri"`
+	EventQueue string `json:"event_queue"`
 }
 
-func SetTestDitectory() {
-	flag.Parse()
-	if *cwd_arg != "" {
-		if err := os.Chdir(*cwd_arg); err != nil {
-			panic(err)
-		}
-	}
+type Config struct {
+	App App `json:"app"`
+	Rmq Rmq `json:"rmq"`
 }

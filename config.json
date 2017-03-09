@@ -1,0 +1,10 @@
+{
+  "app": {
+    "host": null,
+    "port": 9713
+  },
+  "rmq": {
+    "uri": "amqp://guest:guest@127.0.0.1:5672/",
+    "event_queue": "events"
+  }
+}
