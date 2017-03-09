@@ -6,7 +6,7 @@ do
     if [[ ${Dir} != *"/vendor/"* ]]
     then
     	Cwd=`pwd`
-        returnval=`go test -coverprofile=profile.out $Dir --workdir=$Cwd`
+        returnval=`go test -coverprofile=profile.out $Dir`
         echo ${returnval}
         if [[ ${returnval} != *FAIL* ]]
         then
