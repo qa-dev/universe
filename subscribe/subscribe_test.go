@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/qa-dev/universe/config"
+	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/storage"
 	"github.com/stretchr/testify/assert"
+	"os"
 )
 
+var amqpUri string
+
 func init() {
-	config.SetTestDitectory()
+	amqpUri = os.Getenv("AMQP_URI")
+	if amqpUri == "" {
+		log.Fatal("AMQP_URI is required to run rabbitmq tests")
+	}
 }
 
 func TestNewSubscribeService(t *testing.T) {

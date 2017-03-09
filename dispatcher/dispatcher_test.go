@@ -10,16 +10,22 @@ import (
 
 	"time"
 
-	"github.com/qa-dev/universe/config"
+	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/storage"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
+	"os"
 )
 
+var amqpUri string
+
 func init() {
-	config.SetTestDitectory()
+	amqpUri = os.Getenv("AMQP_URI")
+	if amqpUri == "" {
+		log.Fatal("AMQP_URI is required to run rabbitmq tests")
+	}
 }
 
 type FakeClosingBuffer struct {
@@ -52,7 +58,7 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestNewDispatcher(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(config.LoadConfig().GetString("rmq.uri"), "test_event_service_push_event_queue")
+	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_event_service_push_event_queue")
 	defer rmq.Close()
 	// Даем время на подключение
 	time.Sleep(5 * time.Second)
@@ -65,7 +71,7 @@ func TestNewDispatcher(t *testing.T) {
 }
 
 func TestDispatcher_Run(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(config.LoadConfig().GetString("rmq.uri"), "test_event_service_push_event_queue")
+	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_event_service_push_event_queue")
 	defer rmq.Close()
 	// Даем время на подключение
 	time.Sleep(5 * time.Second)
