@@ -20,6 +20,9 @@ script:
   - go version
   - make test
 
+env:
+  - AMQP_URI=amqp://guest:guest@127.0.0.1:5672/
+
 matrix:
   allow_failures:
   - go: master
