@@ -1,39 +1,17 @@
-package observer
+package plugins
 
-import log "github.com/Sirupsen/logrus"
+import (
+	"github.com/qa-dev/universe/event"
+)
 
-var Obs *Observable
-
-type Observer interface {
-	Event(v interface{}) error
-	Subscribe(v interface{}) error
+func (o *Observable) Register(v Plugin) {
+	o.plugins = append(o.plugins, v)
 }
 
-type Observable struct {
-	observers []Observer
-}
-
-func init() {
-	Obs = NewObservable()
-}
-
-func NewObservable() *Observable {
-	return &Observable{}
-}
-
-func (o *Observable) Register(v Observer) {
-	o.observers = append(o.observers, v)
-}
-
-func (o *Observable) NotifyEvent(v interface{}) {
-	for _, ob := range o.observers {
-		go notify(ob, v)
-	}
-}
-
-func notify(ob Observer, v interface{}) {
-	err := ob.Event(v)
-	if err != nil {
-		log.Println(err)
+func (o *Observable) ProcessEvent(name string, eventData event.Event) {
+	for _, ob := range o.plugins {
+		go func(o Plugin) {
+			o.ProcessEvent(name, eventData)
+		}(ob)
 	}
 }

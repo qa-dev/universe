@@ -1,8 +1,10 @@
-package observer
+package plugins
 
 import (
 	"testing"
 
+	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,20 +17,26 @@ type MockObserver struct {
 	mock.Mock
 }
 
-func (m MockObserver) Event(v interface{}) error {
-	args := m.Called(v)
-	m.a.Equal(testMsg, v.(string))
-	m.t.Log("MockObserver.Event called!")
-
-	return args.Error(0)
+func (m MockObserver) GetPluginInfo() *PluginInfo {
+	return &PluginInfo{"Name", "name"}
 }
 
-func (m MockObserver) Subscribe(v interface{}) error {
-	args := m.Called(v)
-	m.a.Equal(testMsg, v.(string))
-	m.t.Log("MockObserver.Subscribe called!")
+func (m MockObserver) ProcessEvent(name string, data event.Event) {
+	m.Called(name, data)
+	m.a.Equal(testMsg, name)
+	m.t.Log("MockObserver.Event called!")
+}
 
-	return args.Error(0)
+func (m MockObserver) Subscribe(name string, data subscribe.SubscribeData) {
+	m.Called(name, data)
+	m.a.Equal(testMsg, name)
+	m.t.Log("MockObserver.Subscribe called!")
+}
+
+func (m MockObserver) Unsubscribe(name string, data subscribe.UnsubscribeData) {
+	m.Called(name, data)
+	m.a.Equal(testMsg, name)
+	m.t.Log("MockObserver.UnsubscribeData called!")
 }
 
 func TestObservable_Add(t *testing.T) {
@@ -39,5 +47,5 @@ func TestObservable_Add(t *testing.T) {
 
 	ob1.On("Notify", testMsg).Return(nil)
 	o.Register(ob1)
-	o.NotifyEvent(testMsg)
+	o.ProcessEvent(testMsg, event.Event{testMsg, []byte(`{}`)})
 }
