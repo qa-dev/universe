@@ -40,8 +40,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/e", handlers.NewEventHandler(eventService))
-	mux.Handle("/subscribe", handlers.NewSubscribeHandler(subscribeService))
+	mux.Handle("/e/", handlers.NewEventHandler(eventService))
+	mux.Handle("/subscribe/", handlers.NewSubscribeHandler(subscribeService))
 
 	listenData := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
 	log.Info("App listen at ", listenData)
