@@ -11,6 +11,7 @@ import (
 	"github.com/qa-dev/universe/dispatcher"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/handlers"
+	_ "github.com/qa-dev/universe/plugin/log"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/storage"
 	"github.com/qa-dev/universe/subscribe"
@@ -44,5 +45,6 @@ func main() {
 
 	listenData := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
 	log.Info("App listen at ", listenData)
+
 	log.Fatal(http.ListenAndServe(listenData, mux))
 }

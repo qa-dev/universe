@@ -15,10 +15,18 @@ type MockObserver struct {
 	mock.Mock
 }
 
-func (m MockObserver) Notify(v interface{}) error {
+func (m MockObserver) Event(v interface{}) error {
 	args := m.Called(v)
 	m.a.Equal(testMsg, v.(string))
-	m.t.Log("MockObserver.Notify called!")
+	m.t.Log("MockObserver.Event called!")
+
+	return args.Error(0)
+}
+
+func (m MockObserver) Subscribe(v interface{}) error {
+	args := m.Called(v)
+	m.a.Equal(testMsg, v.(string))
+	m.t.Log("MockObserver.Subscribe called!")
 
 	return args.Error(0)
 }
@@ -30,6 +38,6 @@ func TestObservable_Add(t *testing.T) {
 	ob1 := &MockObserver{a: a, t: t}
 
 	ob1.On("Notify", testMsg).Return(nil)
-	o.Add(ob1)
-	o.Notify(testMsg)
+	o.Register(ob1)
+	o.NotifyEvent(testMsg)
 }
