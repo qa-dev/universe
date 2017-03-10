@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"time"
+	log "github.com/Sirupsen/logrus"
+	"bytes"
 )
 
 var testMsg = "test"
@@ -27,9 +29,13 @@ func (m MockObserver) Event(v interface{}) error {
 
 func TestLog_Event(t *testing.T) {
 	o := observer.NewObservable()
-	l := Log{}
+	l := Log{logger: log.New()}
+	var b bytes.Buffer
+	l.logger.Out = &b
 	o.Register(l)
-	o.NotifyEvent("Event")
 
-	time.Sleep(100 * time.Millisecond)
+	o.NotifyEvent("Event")
+	time.Sleep(200 * time.Millisecond)
+
+	assert.Contains(t, b.String(), "Event")
 }
