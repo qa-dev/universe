@@ -1,9 +1,11 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
@@ -76,6 +78,20 @@ func (p PluginWeb) Unsubscribe(input []byte) error {
 	return errors.New("No subscribers found")
 }
 
-func (o PluginWeb) ProcessEvent(eventData event.Event) {
-	// TODO
+func (p PluginWeb) ProcessEvent(eventData event.Event) {
+	httpClient := &http.Client{}
+	for _, subscribeUrl := range p.storage.Data[eventData.Name] {
+		req, err := http.NewRequest("POST", subscribeUrl, bytes.NewBuffer(eventData.Payload))
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		log.Println("Status of sending event", eventData.Name, "is", resp.Status)
+	}
 }

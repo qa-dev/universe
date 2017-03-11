@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"io/ioutil"
 	"net/http"
 	"unicode/utf8"
 
-	"io/ioutil"
-
+	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/subscribe"
 )
 
@@ -18,7 +18,8 @@ func NewSubscribeHandler(subscribeService *subscribe.SubscribeService) *Subscrib
 }
 
 func (h *SubscribeHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	pluginName := req.RequestURI[utf8.RuneCountInString("/subscribe"):]
+	pluginName := req.RequestURI[utf8.RuneCountInString("/subscribe/"):]
+	log.Info(pluginName)
 	if len(pluginName) == 0 {
 		resp.Write([]byte("FAIL: BLANK PLUGIN NAME"))
 		return

@@ -27,3 +27,7 @@ func (o *Observable) ProcessSubscribe(pluginName string, input []byte) error {
 
 	return errors.New("No plugin found")
 }
+
+func (o *Observable) GetPlugins() []Plugin {
+	return o.plugins
+}

@@ -21,7 +21,7 @@ func NewEventHandler(eventService EventPublisher) *EventHandler {
 }
 
 func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	eventName := req.RequestURI[utf8.RuneCountInString("/e"):]
+	eventName := req.RequestURI[utf8.RuneCountInString("/e/"):]
 	if len(eventName) == 0 {
 		resp.Write([]byte("FAIL: BLANK EVENT NAME"))
 		return
@@ -35,7 +35,7 @@ func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	e := event.Event{eventName, payload}
 	err = h.eventService.Publish(e)
 	if err == nil {
-		resp.Write([]byte("OK!"))
+		resp.Write([]byte("OK"))
 	} else {
 		resp.Write([]byte("FAIL:" + err.Error()))
 	}

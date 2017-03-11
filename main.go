@@ -11,7 +11,9 @@ import (
 	"github.com/qa-dev/universe/dispatcher"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/handlers"
+	"github.com/qa-dev/universe/plugins"
 	_ "github.com/qa-dev/universe/plugins/log"
+	_ "github.com/qa-dev/universe/plugins/web"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 )
@@ -41,6 +43,10 @@ func main() {
 	mux.Handle("/subscribe/", handlers.NewSubscribeHandler(subscribeService))
 
 	listenData := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
+	log.Info("Connected plugins:")
+	for _, plg := range plugins.Obs.GetPlugins() {
+		log.Info(plg.GetPluginInfo().Name)
+	}
 	log.Info("App listen at ", listenData)
 	log.Fatal(http.ListenAndServe(listenData, mux))
 }
