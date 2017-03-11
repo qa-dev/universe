@@ -6,17 +6,15 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
-
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/rabbitmq"
-	"github.com/qa-dev/universe/storage"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
-	"os"
 )
 
 var amqpUri string
@@ -62,12 +60,8 @@ func TestNewDispatcher(t *testing.T) {
 	defer rmq.Close()
 	// Даем время на подключение
 	time.Sleep(5 * time.Second)
-	storageUnit := storage.NewStorage()
-	client := &http.Client{}
-	dsp := NewDispatcher(rmq, storageUnit, client)
+	dsp := NewDispatcher(rmq)
 	assert.Equal(t, fmt.Sprintf("%p", rmq), fmt.Sprintf("%p", dsp.rmq))
-	assert.Equal(t, fmt.Sprintf("%p", storageUnit), fmt.Sprintf("%p", dsp.storage))
-	assert.Equal(t, fmt.Sprintf("%p", client), fmt.Sprintf("%p", dsp.httpClient))
 }
 
 func TestDispatcher_Run(t *testing.T) {
@@ -75,19 +69,17 @@ func TestDispatcher_Run(t *testing.T) {
 	defer rmq.Close()
 	// Даем время на подключение
 	time.Sleep(5 * time.Second)
-	requestUrl := "test_url"
 	requestData := []byte("{\"test\": \"test\"}")
-	storageUnit := storage.NewStorage()
-	subscrService := subscribe.NewSubscribeService(storageUnit)
+	subscrService := subscribe.NewSubscribeService()
 	eventService := event.NewEventService(rmq)
-	subscribeData := subscribe.Subscribe{EventName: "test.event", WebHookPath: requestUrl}
-	subscrService.ProcessSubscribe(subscribeData)
-	client := &FakePostClient{t, requestUrl, requestData}
-	dsp := NewDispatcher(rmq, storageUnit, client)
+	subscribeData := []byte("{\"test\": \"hello\"}")
+	subscrService.ProcessSubscribe("log", subscribeData)
+	dsp := NewDispatcher(rmq)
 	assert.NotNil(t, dsp)
 	dsp.Run()
 	err := eventService.Publish(event.Event{"test.event", requestData})
 	assert.NoError(t, err)
+	// TODO: assert log
 }
 
 // Disabled

@@ -13,7 +13,6 @@ import (
 	"github.com/qa-dev/universe/handlers"
 	_ "github.com/qa-dev/universe/plugins/log"
 	"github.com/qa-dev/universe/rabbitmq"
-	"github.com/qa-dev/universe/storage"
 	"github.com/qa-dev/universe/subscribe"
 )
 
@@ -28,14 +27,12 @@ func main() {
 	}
 
 	eventRmq := rabbitmq.NewRabbitMQ(cfg.Rmq.Uri, cfg.Rmq.EventQueue)
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
 	defer eventRmq.Close()
 
-	storageUnit := storage.NewStorage()
 	eventService := event.NewEventService(eventRmq)
-	subscribeService := subscribe.NewSubscribeService(storageUnit)
-	httpClient := &http.Client{}
-	dispatcherService := dispatcher.NewDispatcher(eventRmq, storageUnit, httpClient)
+	subscribeService := subscribe.NewSubscribeService()
+	dispatcherService := dispatcher.NewDispatcher(eventRmq)
 	dispatcherService.Run()
 
 	mux := http.NewServeMux()

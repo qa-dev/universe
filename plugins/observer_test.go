@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	"github.com/qa-dev/universe/event"
-	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-var testMsg = "test"
+var testMsg = []byte("test")
 
 type MockObserver struct {
 	a *assert.Assertions
@@ -21,22 +20,24 @@ func (m MockObserver) GetPluginInfo() *PluginInfo {
 	return &PluginInfo{"Name", "name"}
 }
 
-func (m MockObserver) ProcessEvent(name string, data event.Event) {
-	m.Called(name, data)
-	m.a.Equal(testMsg, name)
+func (m MockObserver) ProcessEvent(data event.Event) {
+	m.Called(data)
+	m.a.Equal(testMsg, data.Name)
 	m.t.Log("MockObserver.Event called!")
 }
 
-func (m MockObserver) Subscribe(name string, data subscribe.SubscribeData) {
-	m.Called(name, data)
-	m.a.Equal(testMsg, name)
+func (m MockObserver) Subscribe(input []byte) error {
+	m.Called(input)
+	m.a.Equal(testMsg, input)
 	m.t.Log("MockObserver.Subscribe called!")
+	return nil
 }
 
-func (m MockObserver) Unsubscribe(name string, data subscribe.UnsubscribeData) {
-	m.Called(name, data)
-	m.a.Equal(testMsg, name)
+func (m MockObserver) Unsubscribe(input []byte) error {
+	m.Called(input)
+	m.a.Equal(testMsg, input)
 	m.t.Log("MockObserver.UnsubscribeData called!")
+	return nil
 }
 
 func TestObservable_Add(t *testing.T) {
@@ -47,5 +48,5 @@ func TestObservable_Add(t *testing.T) {
 
 	ob1.On("Notify", testMsg).Return(nil)
 	o.Register(ob1)
-	o.ProcessEvent(testMsg, event.Event{testMsg, []byte(`{}`)})
+	o.ProcessEvent(event.Event{string(testMsg), []byte(`{}`)})
 }
