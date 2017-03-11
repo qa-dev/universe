@@ -30,10 +30,10 @@ func (h *SubscribeHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request
 	err = h.subscribeService.ProcessSubscribe(subscribeData)
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte("FAIL:" + err.Error()))
+		resp.Write([]byte(`{"error": "` + err.Error() + `"}"`))
 	}
 
 	resp.WriteHeader(http.StatusOK)
-	resp.Write([]byte("OK"))
+	resp.Write([]byte(`{"status": "ok"}`))
 
 }
