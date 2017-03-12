@@ -18,7 +18,7 @@ func TestLog_ProcessEvent(t *testing.T) {
 	l.logger.Out = &b
 	o.Register(l)
 
-	o.ProcessEvent(event.Event{"Event", []byte(`{\"hello\": \"test\"}`)})
+	o.ProcessEvent(event.Event{"Event", []byte(`{"hello": "test"}`)})
 	time.Sleep(200 * time.Millisecond)
 
 	t.Log(b.String())

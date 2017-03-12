@@ -78,11 +78,7 @@ func (p PluginWeb) ProcessEvent(eventData event.Event) {
 			log.Error(err)
 			continue
 		}
-		resp, err := p.client.Do(req)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		log.Println("Status of sending event", eventData.Name, "is", resp.Status)
+		// TODO: add ability to log statistics
+		go p.client.Do(req)
 	}
 }

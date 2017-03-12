@@ -53,7 +53,7 @@ func TestPluginWeb_GetPluginInfo(t *testing.T) {
 
 func TestPluginWeb_Subscribe(t *testing.T) {
 	p := NewPluginWeb()
-	inJson := []byte("{\"event_name\": \"test\", \"url\": \"hello\"}")
+	inJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(inJson)
 	assert.NoError(t, err)
 	assert.Len(t, p.storage.Data, 1)
@@ -70,7 +70,7 @@ func TestPluginWeb_Subscribe_WrongInput(t *testing.T) {
 
 func TestPluginWeb_Unsubscribe(t *testing.T) {
 	p := NewPluginWeb()
-	inJson := []byte("{\"event_name\": \"test\", \"url\": \"hello\"}")
+	inJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(inJson)
 	assert.NoError(t, err)
 	assert.Len(t, p.storage.Data, 1)
@@ -88,11 +88,11 @@ func TestPluginWeb_Unsubscribe_WrongInput(t *testing.T) {
 
 func TestPluginWeb_Unsubscribe_NonExistentSubscriber(t *testing.T) {
 	p := NewPluginWeb()
-	subscribeJson := []byte("{\"event_name\": \"test\", \"url\": \"hello\"}")
+	subscribeJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(subscribeJson)
 	assert.NoError(t, err)
 	assert.Len(t, p.storage.Data, 1)
-	unsubscribeJson := []byte("{\"event_name\": \"test\", \"url\": \"bye\"}")
+	unsubscribeJson := []byte(`{"event_name": "test", "url": "bye"}`)
 	err = p.Unsubscribe(unsubscribeJson)
 	assert.Error(t, err)
 	assert.Len(t, p.storage.Data, 1)
@@ -101,11 +101,11 @@ func TestPluginWeb_Unsubscribe_NonExistentSubscriber(t *testing.T) {
 func TestPluginWeb_ProcessEvent(t *testing.T) {
 	p := NewPluginWeb()
 	expectedUrl := "test_url"
-	expectedData := []byte("{\"hello\": \"world\"}")
+	expectedData := []byte(`{"hello": "world"}`)
 	fakeClient := FakePostClient{t, expectedUrl, expectedData}
 	p.client = fakeClient
 	data := event.Event{Name: "test_event", Payload: expectedData}
-	err := p.Subscribe([]byte("{\"event_name\": \"test_event\", \"url\": \"test_url\"}"))
+	err := p.Subscribe([]byte(`{"event_name": "test_event", "url": "test_url"}`))
 	assert.NoError(t, err)
 	p.ProcessEvent(data)
 }
