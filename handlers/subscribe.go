@@ -33,6 +33,7 @@ func (h *SubscribeHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write([]byte(`{"error": "` + err.Error() + `"}"`))
+		return
 	}
 
 	resp.WriteHeader(http.StatusOK)
