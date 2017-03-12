@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/qa-dev/universe/event"
 	"github.com/stretchr/testify/assert"
@@ -108,4 +109,5 @@ func TestPluginWeb_ProcessEvent(t *testing.T) {
 	err := p.Subscribe([]byte(`{"event_name": "test_event", "url": "test_url"}`))
 	assert.NoError(t, err)
 	p.ProcessEvent(data)
+	time.Sleep(1 * time.Second)
 }
