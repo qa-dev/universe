@@ -86,6 +86,18 @@ func TestPluginWeb_Unsubscribe_WrongInput(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestPluginWeb_Unsubscribe_NonExistentSubscriber(t *testing.T) {
+	p := NewPluginWeb()
+	subscribeJson := []byte("{\"event_name\": \"test\", \"url\": \"hello\"}")
+	err := p.Subscribe(subscribeJson)
+	assert.NoError(t, err)
+	assert.Len(t, p.storage.Data, 1)
+	unsubscribeJson := []byte("{\"event_name\": \"test\", \"url\": \"bye\"}")
+	err = p.Unsubscribe(unsubscribeJson)
+	assert.Error(t, err)
+	assert.Len(t, p.storage.Data, 1)
+}
+
 func TestPluginWeb_ProcessEvent(t *testing.T) {
 	p := NewPluginWeb()
 	expectedUrl := "test_url"

@@ -55,7 +55,7 @@ func (p PluginWeb) Subscribe(input []byte) error {
 func (p PluginWeb) Unsubscribe(input []byte) error {
 	var unsubscribeData UnsubscribeData
 	err := json.Unmarshal(input, &unsubscribeData)
-	if err != nil {
+	if err != nil || len(unsubscribeData.EventName) == 0 || len(unsubscribeData.Url) == 0 {
 		log.Errorf("%+v", input)
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
