@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -66,19 +65,18 @@ func (p PluginWeb) Unsubscribe(input []byte) error {
 }
 
 func (p PluginWeb) ProcessEvent(eventData event.Event) {
-	req, err := http.NewRequest("POST", "", bytes.NewBuffer(eventData.Payload))
+	for _, subscribeUrl := range p.storage.Data[eventData.Name] {
+		go p.sendRequest(subscribeUrl, eventData.Payload)
+	}
+}
+
+func (p PluginWeb) sendRequest(url string, payload []byte) {
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
 		log.Error(err)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
-	for _, subscribeUrl := range p.storage.Data[eventData.Name] {
-		req.URL, err = url.Parse(subscribeUrl)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		// TODO: add ability to log statistics
-		go p.client.Do(req)
-	}
+	// TODO: log statistics
+	p.client.Do(req)
 }
