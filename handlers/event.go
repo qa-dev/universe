@@ -34,10 +34,12 @@ func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 	e := event.Event{eventName, payload}
 	err = h.eventService.Publish(e)
-	if err == nil {
-		resp.Write([]byte("OK"))
-	} else {
-		resp.Write([]byte("FAIL:" + err.Error()))
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		resp.Write([]byte(`{"error": "` + err.Error() + `"}"`))
 	}
+
+	resp.WriteHeader(http.StatusOK)
+	resp.Write([]byte(`{"status": "ok"}`))
 
 }
