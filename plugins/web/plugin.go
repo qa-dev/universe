@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
 	"net/url"
 	"time"
 
@@ -17,11 +16,19 @@ import (
 
 type PluginWeb struct {
 	storage *Storage
+	client  HttpRequester
+}
+
+type HttpRequester interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 func NewPluginWeb() PluginWeb {
+	httpClient := &http.Client{
+		Timeout: time.Second * 10,
+	}
 	storage := NewStorage()
-	return PluginWeb{storage}
+	return PluginWeb{storage, httpClient}
 }
 
 func init() {
@@ -36,7 +43,7 @@ func (p PluginWeb) GetPluginInfo() *plugins.PluginInfo {
 func (p PluginWeb) Subscribe(input []byte) error {
 	var subscribeData SubscribeData
 	err := json.Unmarshal(input, &subscribeData)
-	if err != nil {
+	if err != nil || len(subscribeData.EventName) == 0 || len(subscribeData.Url) == 0 {
 		log.Errorf("%+v", input)
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
@@ -59,9 +66,6 @@ func (p PluginWeb) Unsubscribe(input []byte) error {
 }
 
 func (p PluginWeb) ProcessEvent(eventData event.Event) {
-	httpClient := &http.Client{
-		Timeout: time.Second * 10,
-	}
 	req, err := http.NewRequest("POST", "", bytes.NewBuffer(eventData.Payload))
 	if err != nil {
 		log.Error(err)
@@ -74,7 +78,7 @@ func (p PluginWeb) ProcessEvent(eventData event.Event) {
 			log.Error(err)
 			continue
 		}
-		resp, err := httpClient.Do(req)
+		resp, err := p.client.Do(req)
 		if err != nil {
 			log.Error(err)
 			continue

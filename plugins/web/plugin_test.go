@@ -1,10 +1,44 @@
 package web
 
 import (
+	"bytes"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"testing"
 
+	"github.com/qa-dev/universe/event"
 	"github.com/stretchr/testify/assert"
 )
+
+type FakeClosingBuffer struct {
+	*bytes.Buffer
+}
+
+func (cb *FakeClosingBuffer) Close() error {
+	return nil
+}
+
+type FakePostClient struct {
+	t                   *testing.T
+	ExpectedRequestUrl  string
+	ExpectedRequestData []byte
+}
+
+func (c FakePostClient) Do(r *http.Request) (*http.Response, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	assert.NoError(c.t, err)
+	assert.Equal(c.t, c.ExpectedRequestUrl, r.URL.String())
+	assert.Equal(c.t, c.ExpectedRequestData, body)
+	closingBuffer := &FakeClosingBuffer{bytes.NewBufferString("Hi!")}
+	var readCloser io.ReadCloser
+	readCloser = closingBuffer
+	response := &http.Response{}
+	response.Status = "200 OK"
+	response.StatusCode = 200
+	response.Body = readCloser
+	return response, nil
+}
 
 func TestNewPluginWeb(t *testing.T) {
 	p := NewPluginWeb()
@@ -27,6 +61,13 @@ func TestPluginWeb_Subscribe(t *testing.T) {
 	assert.Equal(t, "hello", p.storage.Data["test"][0])
 }
 
+func TestPluginWeb_Subscribe_WrongInput(t *testing.T) {
+	p := NewPluginWeb()
+	inJson := []byte("{}")
+	err := p.Subscribe(inJson)
+	assert.Error(t, err)
+}
+
 func TestPluginWeb_Unsubscribe(t *testing.T) {
 	p := NewPluginWeb()
 	inJson := []byte("{\"event_name\": \"test\", \"url\": \"hello\"}")
@@ -36,4 +77,23 @@ func TestPluginWeb_Unsubscribe(t *testing.T) {
 	err = p.Unsubscribe(inJson)
 	assert.NoError(t, err)
 	assert.Len(t, p.storage.Data, 0)
+}
+
+func TestPluginWeb_Unsubscribe_WrongInput(t *testing.T) {
+	p := NewPluginWeb()
+	inJson := []byte("{}")
+	err := p.Unsubscribe(inJson)
+	assert.Error(t, err)
+}
+
+func TestPluginWeb_ProcessEvent(t *testing.T) {
+	p := NewPluginWeb()
+	expectedUrl := "test_url"
+	expectedData := []byte("{\"hello\": \"world\"}")
+	fakeClient := FakePostClient{t, expectedUrl, expectedData}
+	p.client = fakeClient
+	data := event.Event{Name: "test_event", Payload: expectedData}
+	err := p.Subscribe([]byte("{\"event_name\": \"test_event\", \"url\": \"test_url\"}"))
+	assert.NoError(t, err)
+	p.ProcessEvent(data)
 }
