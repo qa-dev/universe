@@ -39,7 +39,7 @@ func (r *RabbitMQ) connect() {
 			return
 		}
 		log.Println(err)
-		log.Printf("Trying to reconnect to RabbitMQ at %s\n", r.uri)
+		log.Printf("Trying to reconnect to RabbitMQ at %s", r.uri)
 		time.Sleep(3000 * time.Millisecond)
 	}
 }
@@ -49,7 +49,7 @@ func (r *RabbitMQ) checkConnection() {
 	for {
 		rabbitErr = <-r.closeError
 		if rabbitErr != nil {
-			log.Printf("Connecting to %s\n", r.uri)
+			log.Printf("Connecting to %s", r.uri)
 
 			r.connect()
 

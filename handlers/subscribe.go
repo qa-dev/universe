@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"unicode/utf8"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/subscribe"
 )
 
@@ -17,17 +17,19 @@ func NewSubscribeHandler(subscribeService *subscribe.SubscribeService) *Subscrib
 }
 
 func (h *SubscribeHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	decoder := json.NewDecoder(req.Body)
-	var subscribeData subscribe.Subscribe
-	err := decoder.Decode(&subscribeData)
+	pluginName := req.RequestURI[utf8.RuneCountInString("/subscribe/"):]
+	if len(pluginName) == 0 {
+		resp.Write([]byte("FAIL: BLANK PLUGIN NAME"))
+		return
+	}
+	input, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		log.Println("Bad subscribe request")
 		resp.Write([]byte("FAIL: BAD REQUEST"))
 		return
 	}
 	defer req.Body.Close()
 
-	err = h.subscribeService.ProcessSubscribe(subscribeData)
+	err = h.subscribeService.ProcessSubscribe(pluginName, input)
 	if err == nil {
 		resp.Write([]byte("OK"))
 	} else {

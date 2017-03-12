@@ -1,14 +1,12 @@
 package dispatcher
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/plugins"
 	"github.com/qa-dev/universe/rabbitmq"
-	"github.com/qa-dev/universe/storage"
 )
 
 type ClientInterface interface {
@@ -16,13 +14,11 @@ type ClientInterface interface {
 }
 
 type Dispatcher struct {
-	rmq        *rabbitmq.RabbitMQ
-	storage    *storage.Storage
-	httpClient ClientInterface
+	rmq *rabbitmq.RabbitMQ
 }
 
-func NewDispatcher(rmq *rabbitmq.RabbitMQ, storage *storage.Storage, client ClientInterface) *Dispatcher {
-	return &Dispatcher{rmq, storage, client}
+func NewDispatcher(rmq *rabbitmq.RabbitMQ) *Dispatcher {
+	return &Dispatcher{rmq}
 }
 
 func (d *Dispatcher) Run() {
@@ -40,30 +36,11 @@ func (d *Dispatcher) worker() {
 		var e event.Event
 		err = json.Unmarshal(rawData.Body(), &e)
 		if err != nil {
+			// TODO log?
 			panic(err)
 		}
 
-		d.storage.Mutex.Lock()
-
-		if val, ok := d.storage.Data[e.Name]; ok {
-			for _, hookPath := range val {
-				log.Println("Sending event", e.Name, "to", hookPath)
-				req, err := http.NewRequest("POST", hookPath, bytes.NewBuffer(e.Payload))
-				req.Header.Set("Content-Type", "application/json")
-
-				resp, err := d.httpClient.Do(req)
-				if err != nil {
-					log.Println(err.Error())
-					continue
-				}
-				log.Println("Status of sending event", e.Name, "is", resp.Status)
-				resp.Body.Close()
-			}
-		} else {
-			log.Println("No subscribers for event", e.Name)
-		}
-
-		d.storage.Mutex.Unlock()
+		plugins.Obs.ProcessEvent(e)
 
 		rawData.Ack(false)
 	}
