@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"net/url"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/plugins"
@@ -38,13 +41,7 @@ func (p PluginWeb) Subscribe(input []byte) error {
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
 	}
-	p.storage.Mutex.Lock()
-	if _, ok := p.storage.Data[subscribeData.EventName]; !ok {
-		p.storage.Data[subscribeData.EventName] = make([]string, 0)
-	}
-	p.storage.Data[subscribeData.EventName] = append(p.storage.Data[subscribeData.EventName], subscribeData.Url)
-	p.storage.Mutex.Unlock()
-
+	p.storage.AddSubscriber(subscribeData)
 	return nil
 }
 
@@ -56,37 +53,27 @@ func (p PluginWeb) Unsubscribe(input []byte) error {
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
 	}
-	p.storage.Mutex.Lock()
-	if _, ok := p.storage.Data[unsubscribeData.EventName]; !ok {
-		errorText := fmt.Sprintf("No subscribers for event %s", unsubscribeData.EventName)
-		return errors.New(errorText)
-	}
-	for pos, element := range p.storage.Data[unsubscribeData.EventName] {
-		if element == unsubscribeData.Url {
-			p.storage.Data[unsubscribeData.EventName][pos] = p.storage.Data[unsubscribeData.EventName][len(p.storage.Data[unsubscribeData.EventName])-1]
-			p.storage.Data[unsubscribeData.EventName] = p.storage.Data[unsubscribeData.EventName][:len(p.storage.Data[unsubscribeData.EventName])-1]
-			if len(p.storage.Data[unsubscribeData.EventName]) == 0 {
-				delete(p.storage.Data, unsubscribeData.EventName)
-			}
-			p.storage.Mutex.Unlock()
-			return nil
-		}
-	}
+	err = p.storage.RemoveSubscriber(unsubscribeData)
 
-	p.storage.Mutex.Unlock()
-
-	return errors.New("No subscribers found")
+	return err
 }
 
 func (p PluginWeb) ProcessEvent(eventData event.Event) {
-	httpClient := &http.Client{}
+	httpClient := &http.Client{
+		Timeout: time.Second * 10,
+	}
+	req, err := http.NewRequest("POST", "", bytes.NewBuffer(eventData.Payload))
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
 	for _, subscribeUrl := range p.storage.Data[eventData.Name] {
-		req, err := http.NewRequest("POST", subscribeUrl, bytes.NewBuffer(eventData.Payload))
+		req.URL, err = url.Parse(subscribeUrl)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
-		req.Header.Set("Content-Type", "application/json")
 		resp, err := httpClient.Do(req)
 		if err != nil {
 			log.Error(err)
