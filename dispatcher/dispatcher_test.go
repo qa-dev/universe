@@ -69,10 +69,10 @@ func TestDispatcher_Run(t *testing.T) {
 	defer rmq.Close()
 	// Даем время на подключение
 	time.Sleep(5 * time.Second)
-	requestData := []byte("{\"test\": \"test\"}")
+	requestData := []byte(`{"test": "test"}`)
 	subscrService := subscribe.NewSubscribeService()
 	eventService := event.NewEventService(rmq)
-	subscribeData := []byte("{\"test\": \"hello\"}")
+	subscribeData := []byte(`{"test": "hello"}`)
 	subscrService.ProcessSubscribe("log", subscribeData)
 	dsp := NewDispatcher(rmq)
 	assert.NotNil(t, dsp)
