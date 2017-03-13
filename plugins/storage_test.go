@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"testing"
-
 	"time"
 
 	"github.com/qa-dev/universe/event"
@@ -57,4 +56,11 @@ func TestObservable_Add(t *testing.T) {
 func TestNewPluginStorage(t *testing.T) {
 	storage := NewPluginStorage()
 	assert.NotNil(t, storage)
+}
+
+func TestPluginStorage_ProcessSubscribe_WrongPluginName(t *testing.T) {
+	storage := NewPluginStorage()
+	err := storage.ProcessSubscribe("pew", []byte(""))
+	assert.Error(t, err)
+	assert.Equal(t, err.Error(), "No plugin found")
 }
