@@ -30,11 +30,6 @@ func NewPluginWeb() PluginWeb {
 	return PluginWeb{storage, httpClient}
 }
 
-func init() {
-	p := NewPluginWeb()
-	plugins.Obs.Register(p)
-}
-
 func (p PluginWeb) GetPluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{Name: "Web", Tag: "web"}
 }

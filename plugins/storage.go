@@ -6,11 +6,20 @@ import (
 	"github.com/qa-dev/universe/event"
 )
 
-func (o *Observable) Register(v Plugin) {
+
+type PluginStorage struct {
+	plugins []Plugin
+}
+
+func NewPluginStorage() *PluginStorage {
+	return &PluginStorage{}
+}
+
+func (o *PluginStorage) Register(v Plugin) {
 	o.plugins = append(o.plugins, v)
 }
 
-func (o *Observable) ProcessEvent(eventData event.Event) {
+func (o *PluginStorage) ProcessEvent(eventData event.Event) {
 	for _, ob := range o.plugins {
 		go func(o Plugin) {
 			o.ProcessEvent(eventData)
@@ -18,7 +27,7 @@ func (o *Observable) ProcessEvent(eventData event.Event) {
 	}
 }
 
-func (o *Observable) ProcessSubscribe(pluginName string, input []byte) error {
+func (o *PluginStorage) ProcessSubscribe(pluginName string, input []byte) error {
 	for _, ob := range o.plugins {
 		if ob.GetPluginInfo().Tag == pluginName {
 			return ob.Subscribe(input)
@@ -28,6 +37,6 @@ func (o *Observable) ProcessSubscribe(pluginName string, input []byte) error {
 	return errors.New("No plugin found")
 }
 
-func (o *Observable) GetPlugins() []Plugin {
+func (o *PluginStorage) GetPlugins() []Plugin {
 	return o.plugins
 }

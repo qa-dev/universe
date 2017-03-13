@@ -7,10 +7,12 @@ import (
 	"github.com/qa-dev/universe/plugins"
 )
 
-type SubscribeService struct{}
+type SubscribeService struct {
+	pluginStorage *plugins.PluginStorage
+}
 
-func NewSubscribeService() *SubscribeService {
-	return &SubscribeService{}
+func NewSubscribeService(storage *plugins.PluginStorage) *SubscribeService {
+	return &SubscribeService{storage}
 }
 
 func (s *SubscribeService) ProcessSubscribe(pluginName string, input []byte) error {
@@ -18,7 +20,7 @@ func (s *SubscribeService) ProcessSubscribe(pluginName string, input []byte) err
 		log.Println("Got blank plugin name")
 		return errors.New("BLANK PLUGIN NAME")
 	}
-	err := plugins.Obs.ProcessSubscribe(pluginName, input)
+	err := s.pluginStorage.ProcessSubscribe(pluginName, input)
 
 	return err
 }
