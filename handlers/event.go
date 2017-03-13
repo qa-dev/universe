@@ -23,12 +23,14 @@ func NewEventHandler(eventService EventPublisher) *EventHandler {
 func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	eventName := req.RequestURI[utf8.RuneCountInString("/e/"):]
 	if len(eventName) == 0 {
-		resp.Write([]byte("FAIL: BLANK EVENT NAME"))
+		resp.WriteHeader(http.StatusBadRequest)
+		resp.Write([]byte(`{"error": "Blank plugin name"}`))
 		return
 	}
 	payload, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		resp.Write([]byte("FAIL:" + err.Error()))
+		resp.WriteHeader(http.StatusBadRequest)
+		resp.Write([]byte(`{"error": "` + err.Error() + `"}"`))
 		return
 	}
 

@@ -19,12 +19,14 @@ func NewSubscribeHandler(subscribeService *subscribe.SubscribeService) *Subscrib
 func (h *SubscribeHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	pluginName := req.RequestURI[utf8.RuneCountInString("/subscribe/"):]
 	if len(pluginName) == 0 {
-		resp.Write([]byte("FAIL: BLANK PLUGIN NAME"))
+		resp.WriteHeader(http.StatusBadRequest)
+		resp.Write([]byte(`{"error": "Blank plugin name"}`))
 		return
 	}
 	input, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		resp.Write([]byte("FAIL: BAD REQUEST"))
+		resp.WriteHeader(http.StatusBadRequest)
+		resp.Write([]byte(`{"error": "Bad request"}`))
 		return
 	}
 	defer req.Body.Close()
