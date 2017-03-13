@@ -11,14 +11,6 @@ type Plugin interface {
 	ProcessEvent(eventData event.Event)
 }
 
-type PluginStorage struct {
-	plugins []Plugin
-}
-
-func NewPluginStorage() *PluginStorage {
-	return &PluginStorage{}
-}
-
 type PluginInfo struct {
 	Name string
 	Tag  string

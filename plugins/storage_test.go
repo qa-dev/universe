@@ -53,3 +53,8 @@ func TestObservable_Add(t *testing.T) {
 	o.ProcessEvent(event.Event{string(testMsg), []byte(`{}`)})
 	time.Sleep(1 * time.Second)
 }
+
+func TestNewPluginStorage(t *testing.T) {
+	storage := NewPluginStorage()
+	assert.NotNil(t, storage)
+}

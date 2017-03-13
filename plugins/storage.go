@@ -6,6 +6,15 @@ import (
 	"github.com/qa-dev/universe/event"
 )
 
+
+type PluginStorage struct {
+	plugins []Plugin
+}
+
+func NewPluginStorage() *PluginStorage {
+	return &PluginStorage{}
+}
+
 func (o *PluginStorage) Register(v Plugin) {
 	o.plugins = append(o.plugins, v)
 }
