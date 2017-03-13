@@ -11,21 +11,15 @@ type Plugin interface {
 	ProcessEvent(eventData event.Event)
 }
 
-var Obs *Observable
-
-type Observable struct {
+type PluginStorage struct {
 	plugins []Plugin
+}
+
+func NewPluginStorage() *PluginStorage {
+	return &PluginStorage{}
 }
 
 type PluginInfo struct {
 	Name string
 	Tag  string
-}
-
-func init() {
-	Obs = NewObservable()
-}
-
-func NewObservable() *Observable {
-	return &Observable{}
 }

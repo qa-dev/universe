@@ -12,7 +12,7 @@ import (
 )
 
 func TestLog_ProcessEvent(t *testing.T) {
-	o := plugins.NewObservable()
+	o := plugins.NewPluginStorage()
 	l := Log{logger: log.New()}
 	var b bytes.Buffer
 	l.logger.Out = &b

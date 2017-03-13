@@ -14,11 +14,12 @@ type ClientInterface interface {
 }
 
 type Dispatcher struct {
-	rmq *rabbitmq.RabbitMQ
+	rmq           *rabbitmq.RabbitMQ
+	pluginStorage *plugins.PluginStorage
 }
 
-func NewDispatcher(rmq *rabbitmq.RabbitMQ) *Dispatcher {
-	return &Dispatcher{rmq}
+func NewDispatcher(rmq *rabbitmq.RabbitMQ, storage *plugins.PluginStorage) *Dispatcher {
+	return &Dispatcher{rmq, storage}
 }
 
 func (d *Dispatcher) Run() {
@@ -40,7 +41,7 @@ func (d *Dispatcher) worker() {
 			panic(err)
 		}
 
-		plugins.Obs.ProcessEvent(e)
+		d.pluginStorage.ProcessEvent(e)
 
 		rawData.Ack(false)
 	}

@@ -12,8 +12,8 @@ import (
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/handlers"
 	"github.com/qa-dev/universe/plugins"
-	_ "github.com/qa-dev/universe/plugins/log"
-	_ "github.com/qa-dev/universe/plugins/web"
+	logPlugin "github.com/qa-dev/universe/plugins/log"
+	"github.com/qa-dev/universe/plugins/web"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 )
@@ -32,9 +32,13 @@ func main() {
 	time.Sleep(2 * time.Second)
 	defer eventRmq.Close()
 
+	pluginStorage := plugins.NewPluginStorage()
+	pluginStorage.Register(web.NewPluginWeb())
+	pluginStorage.Register(logPlugin.NewLog())
+
 	eventService := event.NewEventService(eventRmq)
-	subscribeService := subscribe.NewSubscribeService()
-	dispatcherService := dispatcher.NewDispatcher(eventRmq)
+	subscribeService := subscribe.NewSubscribeService(pluginStorage)
+	dispatcherService := dispatcher.NewDispatcher(eventRmq, pluginStorage)
 	dispatcherService.Run()
 
 	mux := http.NewServeMux()
@@ -44,7 +48,7 @@ func main() {
 
 	listenData := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
 	log.Info("Connected plugins:")
-	for _, plg := range plugins.Obs.GetPlugins() {
+	for _, plg := range pluginStorage.GetPlugins() {
 		log.Info(plg.GetPluginInfo().Name)
 	}
 	log.Info("App listen at ", listenData)

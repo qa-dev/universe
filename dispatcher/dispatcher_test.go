@@ -12,6 +12,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/plugins"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
@@ -58,23 +59,25 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 func TestNewDispatcher(t *testing.T) {
 	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_event_service_push_event_queue")
 	defer rmq.Close()
+	storage := plugins.NewPluginStorage()
 	// Даем время на подключение
 	time.Sleep(5 * time.Second)
-	dsp := NewDispatcher(rmq)
+	dsp := NewDispatcher(rmq, storage)
 	assert.Equal(t, fmt.Sprintf("%p", rmq), fmt.Sprintf("%p", dsp.rmq))
 }
 
 func TestDispatcher_Run(t *testing.T) {
 	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_event_service_push_event_queue")
 	defer rmq.Close()
+	storage := plugins.NewPluginStorage()
 	// Даем время на подключение
 	time.Sleep(5 * time.Second)
 	requestData := []byte(`{"test": "test"}`)
-	subscrService := subscribe.NewSubscribeService()
+	subscrService := subscribe.NewSubscribeService(storage)
 	eventService := event.NewEventService(rmq)
 	subscribeData := []byte(`{"test": "hello"}`)
 	subscrService.ProcessSubscribe("log", subscribeData)
-	dsp := NewDispatcher(rmq)
+	dsp := NewDispatcher(rmq, storage)
 	assert.NotNil(t, dsp)
 	dsp.Run()
 	err := eventService.Publish(event.Event{"test.event", requestData})

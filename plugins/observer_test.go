@@ -45,7 +45,7 @@ func (m MockObserver) Unsubscribe(input []byte) error {
 func TestObservable_Add(t *testing.T) {
 	a := assert.New(t)
 
-	o := Observable{}
+	o := PluginStorage{}
 	ob1 := &MockObserver{a: a, t: t}
 
 	ob1.On("ProcessEvent", event.Event{string(testMsg), []byte(`{}`)}).Return(nil)

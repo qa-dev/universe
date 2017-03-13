@@ -10,9 +10,8 @@ type Log struct {
 	logger *log.Logger
 }
 
-func init() {
-	l := Log{logger: log.New()}
-	plugins.Obs.Register(l)
+func NewLog() Log {
+	return Log{logger: log.New()}
 }
 
 func (l Log) GetPluginInfo() *plugins.PluginInfo {
