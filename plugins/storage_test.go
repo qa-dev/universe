@@ -11,6 +11,25 @@ import (
 
 var testMsg = []byte("test")
 
+type FakePlugin struct{}
+
+func (FakePlugin) GetPluginInfo() *PluginInfo {
+	return &PluginInfo{
+		Name: "Fake",
+		Tag:  "fake",
+	}
+}
+
+func (FakePlugin) Subscribe(input []byte) error {
+	return nil
+}
+
+func (FakePlugin) Unsubscribe(input []byte) error {
+	return nil
+}
+
+func (FakePlugin) ProcessEvent(eventData event.Event) {}
+
 type MockObserver struct {
 	a *assert.Assertions
 	t *testing.T
@@ -63,4 +82,18 @@ func TestPluginStorage_ProcessSubscribe_WrongPluginName(t *testing.T) {
 	err := storage.ProcessSubscribe("pew", []byte(""))
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), "No plugin found")
+}
+
+func TestPluginStorage_ProcessSubscribe(t *testing.T) {
+	storage := NewPluginStorage()
+	storage.Register(FakePlugin{})
+	err := storage.ProcessSubscribe("fake", []byte(""))
+	assert.NoError(t, err)
+}
+
+func TestPluginStorage_GetPlugins(t *testing.T) {
+	storage := NewPluginStorage()
+	assert.Len(t, storage.GetPlugins(), 0)
+	storage.Register(FakePlugin{})
+	assert.Len(t, storage.GetPlugins(), 1)
 }
