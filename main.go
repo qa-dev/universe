@@ -54,6 +54,7 @@ func main() {
 
 	mux.Handle("/e/", handlers.NewEventHandler(eventService))
 	mux.Handle("/subscribe/", handlers.NewSubscribeHandler(subscribeService))
+	mux.Handle("/unsubscribe/", handlers.NewUnsubscribeHandler(subscribeService))
 
 	listenData := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
 	log.Info("Connected plugins:")

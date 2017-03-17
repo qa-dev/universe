@@ -23,7 +23,12 @@ func (k *MongoKeeper) StoreSubscriber(pluginName string, data interface{}) error
 
 func (k *MongoKeeper) GetSubscribers(pluginName string, result interface{}) error {
 	c := k.mongo.DB(SUBSCRIBERS_DB).C(COLLECTION_PREFIX + pluginName)
-
 	err := c.Find(nil).All(result)
+	return err
+}
+
+func (k *MongoKeeper) RemoveSubscriber(pluginName string, data interface{}) error {
+	c := k.mongo.DB(SUBSCRIBERS_DB).C(COLLECTION_PREFIX + pluginName)
+	err := c.Remove(data)
 	return err
 }

@@ -36,9 +36,9 @@ func NewPluginWeb(keeper keeper.Keeper) *PluginWeb {
 
 func (p *PluginWeb) GetPluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
-		Name:                "Web",
-		Tag:                 PLUGIN_TAG,
-		Version:             1,
+		Name:    "Web",
+		Tag:     PLUGIN_TAG,
+		Version: 1,
 	}
 }
 
@@ -63,6 +63,7 @@ func (p *PluginWeb) Unsubscribe(input []byte) error {
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
 	}
+	p.keeper.RemoveSubscriber(PLUGIN_TAG, unsubscribeData)
 	err = p.storage.RemoveSubscriber(unsubscribeData)
 
 	return err

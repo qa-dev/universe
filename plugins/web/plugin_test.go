@@ -51,6 +51,10 @@ func (*FakeKeeper) GetSubscribers(pluginName string, result interface{}) error {
 	return nil
 }
 
+func (*FakeKeeper) RemoveSubscriber(pluginName string, data interface{}) error {
+	return nil
+}
+
 func TestNewPluginWeb(t *testing.T) {
 	p := NewPluginWeb(&FakeKeeper{})
 	assert.NotNil(t, p.storage)
