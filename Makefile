@@ -9,3 +9,8 @@ build:
 
 clean:
 	rm -rf ./dist
+
+docker:
+	GOOS=linux make build
+	cp ./Dockerfile ./dist
+	docker build --no-cache -t universe:latest ./dist
