@@ -39,7 +39,6 @@ func (p *PluginWeb) GetPluginInfo() *plugins.PluginInfo {
 		Name:                "Web",
 		Tag:                 PLUGIN_TAG,
 		Version:             1,
-		SubscribersStorable: true,
 	}
 }
 

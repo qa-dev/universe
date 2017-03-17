@@ -16,5 +16,4 @@ type PluginInfo struct {
 	Name                string
 	Tag                 string
 	Version             int
-	SubscribersStorable bool
 }

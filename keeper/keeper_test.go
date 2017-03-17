@@ -20,7 +20,6 @@ func (m FakePlugin) GetPluginInfo() *plugins.PluginInfo {
 		Name:                "Name",
 		Tag:                 "test_fake_plugin",
 		Version:             1,
-		SubscribersStorable: true,
 	}
 }
 

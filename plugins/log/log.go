@@ -16,10 +16,9 @@ func NewLog() Log {
 
 func (l Log) GetPluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
-		Name:                "Log",
-		Tag:                 "log",
-		Version:             1,
-		SubscribersStorable: false,
+		Name:    "Log",
+		Tag:     "log",
+		Version: 1,
 	}
 }
 
