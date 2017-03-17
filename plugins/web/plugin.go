@@ -19,14 +19,14 @@ const PLUGIN_TAG string = "web"
 type PluginWeb struct {
 	storage *Storage
 	client  HttpRequester
-	keeper  *keeper.Keeper
+	keeper  keeper.Keeper
 }
 
 type HttpRequester interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewPluginWeb(keeper *keeper.Keeper) *PluginWeb {
+func NewPluginWeb(keeper keeper.Keeper) *PluginWeb {
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}

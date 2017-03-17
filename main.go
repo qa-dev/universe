@@ -39,7 +39,7 @@ func main() {
 		panic(err)
 	}
 
-	kpr := keeper.NewKeeper(msession)
+	kpr := keeper.NewMongoKeeper(msession)
 
 	pluginStorage := plugins.NewPluginStorage()
 	pluginStorage.Register(web.NewPluginWeb(kpr))
