@@ -24,3 +24,13 @@ func (s *SubscribeService) ProcessSubscribe(pluginName string, input []byte) err
 
 	return err
 }
+
+func (s *SubscribeService) ProcessUnsubscribe(pluginName string, input []byte) error {
+	if len(pluginName) == 0 {
+		log.Println("Got blank plugin name")
+		return errors.New("BLANK PLUGIN NAME")
+	}
+	err := s.pluginStorage.ProcessUnsubscribe(pluginName, input)
+
+	return err
+}

@@ -37,6 +37,16 @@ func (o *PluginStorage) ProcessSubscribe(pluginName string, input []byte) error 
 	return errors.New("No plugin found")
 }
 
+func (o *PluginStorage) ProcessUnsubscribe(pluginName string, input []byte) error {
+	for _, ob := range o.plugins {
+		if ob.GetPluginInfo().Tag == pluginName {
+			return ob.Unsubscribe(input)
+		}
+	}
+
+	return errors.New("No plugin found")
+}
+
 func (o *PluginStorage) GetPlugins() []Plugin {
 	return o.plugins
 }
