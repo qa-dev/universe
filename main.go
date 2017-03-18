@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -28,6 +31,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	stopChan := make(chan os.Signal)
+	signal.Notify(stopChan, os.Interrupt)
+
 	eventRmq := rabbitmq.NewRabbitMQ(cfg.Rmq.Uri, cfg.Rmq.EventQueue)
 	time.Sleep(2 * time.Second)
 	defer eventRmq.Close()
@@ -51,6 +57,21 @@ func main() {
 	for _, plg := range pluginStorage.GetPlugins() {
 		log.Info(plg.GetPluginInfo().Name)
 	}
-	log.Info("App listen at ", listenData)
-	log.Fatal(http.ListenAndServe(listenData, mux))
+
+	srv := &http.Server{Addr: listenData, Handler: mux}
+	go func() {
+		// service connections
+		if err := srv.ListenAndServe(); err != nil {
+			log.Fatalf("listen: %s\n", err)
+		}
+		log.Info("App listen at ", listenData)
+	}()
+
+	<-stopChan
+	log.Info("Shutting down server...")
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	srv.Shutdown(ctx)
+
+	log.Info("Server gracefully stopped")
 }
