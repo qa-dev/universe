@@ -10,28 +10,27 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
-	"github.com/qa-dev/universe/keeper"
 	"github.com/qa-dev/universe/plugins"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const PLUGIN_TAG string = "web"
 
 type PluginWeb struct {
-	storage *Storage
-	client  HttpRequester
-	keeper  keeper.Keeper
+	client     HttpRequester
+	collection *mgo.Collection
 }
 
 type HttpRequester interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewPluginWeb(keeper keeper.Keeper) *PluginWeb {
+func NewPluginWeb(collection *mgo.Collection) *PluginWeb {
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
-	storage := NewStorage()
-	return &PluginWeb{storage, httpClient, keeper}
+	return &PluginWeb{httpClient, collection}
 }
 
 func (p *PluginWeb) GetPluginInfo() *plugins.PluginInfo {
@@ -50,9 +49,7 @@ func (p *PluginWeb) Subscribe(input []byte) error {
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
 	}
-	p.keeper.StoreSubscriber(PLUGIN_TAG, &subscribeData)
-	p.storage.AddSubscriber(subscribeData)
-	return nil
+	return p.collection.Insert(subscribeData)
 }
 
 func (p *PluginWeb) Unsubscribe(input []byte) error {
@@ -63,15 +60,14 @@ func (p *PluginWeb) Unsubscribe(input []byte) error {
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
 	}
-	p.keeper.RemoveSubscriber(PLUGIN_TAG, unsubscribeData)
-	err = p.storage.RemoveSubscriber(unsubscribeData)
-
-	return err
+	return p.collection.Remove(unsubscribeData)
 }
 
 func (p *PluginWeb) ProcessEvent(eventData event.Event) {
-	for _, subscribeUrl := range p.storage.Data[eventData.Name] {
-		go p.sendRequest(subscribeUrl, eventData.Payload)
+	var result []SubscribeData
+	p.collection.Find(bson.M{"eventname": eventData.Name}).All(&result)
+	for _, data := range result {
+		go p.sendRequest(data.Url, eventData.Payload)
 	}
 }
 
@@ -84,16 +80,4 @@ func (p *PluginWeb) sendRequest(url string, payload []byte) {
 	req.Header.Set("Content-Type", "application/json")
 	// TODO: log statistics
 	p.client.Do(req)
-}
-
-func (p *PluginWeb) Loaded() {
-	var subscribers []SubscribeData
-	err := p.keeper.GetSubscribers(PLUGIN_TAG, &subscribers)
-	log.Info(subscribers)
-	if err != nil {
-		panic(err)
-	}
-	for _, subscriber := range subscribers {
-		p.storage.AddSubscriber(subscriber)
-	}
 }

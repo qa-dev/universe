@@ -39,10 +39,10 @@ func main() {
 		panic(err)
 	}
 
-	kpr := keeper.NewMongoKeeper(msession)
+	master := keeper.NewMongoMaster(msession)
 
 	pluginStorage := plugins.NewPluginStorage()
-	pluginStorage.Register(web.NewPluginWeb(kpr))
+	pluginStorage.Register(web.NewPluginWeb(master.GetCollection("web")))
 	pluginStorage.Register(logPlugin.NewLog())
 
 	eventService := event.NewEventService(eventRmq)
@@ -60,12 +60,6 @@ func main() {
 	log.Info("Connected plugins:")
 	for _, plg := range pluginStorage.GetPlugins() {
 		log.Info(plg.GetPluginInfo().Name)
-	}
-
-	log.Info("loading subscribers...")
-	for _, plg := range pluginStorage.GetPlugins() {
-		plg.Loaded()
-		log.Info(plg.GetPluginInfo().Name + " loaded")
 	}
 
 	log.Info("App listen at ", listenData)

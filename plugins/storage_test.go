@@ -34,8 +34,6 @@ func (FakePlugin) Unsubscribe(input []byte) error {
 }
 
 func (FakePlugin) ProcessEvent(eventData event.Event) {}
-func (FakePlugin) Loaded() {}
-
 
 type MockObserver struct {
 	a *assert.Assertions
@@ -73,11 +71,6 @@ func (m MockObserver) Unsubscribe(input []byte) error {
 	m.a.Equal(testMsg, input)
 	m.t.Log("MockObserver.UnsubscribeData called!")
 	return nil
-}
-
-func (m MockObserver) Loaded() {
-	m.Called()
-	m.t.Log("MockObserver.UnsubscribeData called!")
 }
 
 func TestObservable_Add(t *testing.T) {

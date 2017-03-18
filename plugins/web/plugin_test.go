@@ -5,11 +5,14 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/qa-dev/universe/event"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type FakeClosingBuffer struct {
@@ -41,80 +44,94 @@ func (c FakePostClient) Do(r *http.Request) (*http.Response, error) {
 	return response, nil
 }
 
-type FakeKeeper struct{}
+var database *mgo.Database
 
-func (*FakeKeeper) StoreSubscriber(pluginName string, data interface{}) error {
-	return nil
-}
-
-func (*FakeKeeper) GetSubscribers(pluginName string, result interface{}) error {
-	return nil
-}
-
-func (*FakeKeeper) RemoveSubscriber(pluginName string, data interface{}) error {
-	return nil
+func init() {
+	mongoUri := os.Getenv("MONGO_URI")
+	session, err := mgo.Dial(mongoUri)
+	if err != nil {
+		panic("cant connect mongo")
+	}
+	database = session.DB("test_plugin_web")
+	database.DropDatabase()
 }
 
 func TestNewPluginWeb(t *testing.T) {
-	p := NewPluginWeb(&FakeKeeper{})
-	assert.NotNil(t, p.storage)
+	c := database.C("test_new_plugin_web")
+	p := NewPluginWeb(c)
+	assert.NotNil(t, p.collection)
 }
 
 func TestPluginWeb_GetPluginInfo(t *testing.T) {
-	p := NewPluginWeb(&FakeKeeper{})
+	c := database.C("test_plugin_web_get_plugin_info")
+	p := NewPluginWeb(c)
 	assert.Equal(t, "web", p.GetPluginInfo().Tag)
 	assert.Equal(t, "Web", p.GetPluginInfo().Name)
 }
 
 func TestPluginWeb_Subscribe(t *testing.T) {
-	p := NewPluginWeb(&FakeKeeper{})
+	c := database.C("test_plugin_web_subscribe")
+	p := NewPluginWeb(c)
 	inJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(inJson)
 	assert.NoError(t, err)
-	assert.Len(t, p.storage.Data, 1)
-	assert.Len(t, p.storage.Data["test"], 1)
-	assert.Equal(t, "hello", p.storage.Data["test"][0])
+	resCount, err := c.Find(bson.M{"eventname": "test"}).Count()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, resCount)
 }
 
 func TestPluginWeb_Subscribe_WrongInput(t *testing.T) {
-	p := NewPluginWeb(&FakeKeeper{})
+	c := database.C("test_plugin_web_wrong_input")
+	p := NewPluginWeb(c)
 	inJson := []byte("{}")
 	err := p.Subscribe(inJson)
 	assert.Error(t, err)
 }
 
 func TestPluginWeb_Unsubscribe(t *testing.T) {
-	p := NewPluginWeb(&FakeKeeper{})
+	c := database.C("test_plugin_web_unsubscribe")
+	p := NewPluginWeb(c)
 	inJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(inJson)
 	assert.NoError(t, err)
-	assert.Len(t, p.storage.Data, 1)
+	resCount, err := c.Find(bson.M{"eventname": "test"}).Count()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, resCount)
 	err = p.Unsubscribe(inJson)
 	assert.NoError(t, err)
-	assert.Len(t, p.storage.Data, 0)
+	resCount, err = c.Find(bson.M{"eventname": "test"}).Count()
+	assert.NoError(t, err)
+	assert.Equal(t, 0, resCount)
 }
 
 func TestPluginWeb_Unsubscribe_WrongInput(t *testing.T) {
-	p := NewPluginWeb(&FakeKeeper{})
+	c := database.C("test_plugin_web_unsubscribe_wrong_input")
+	p := NewPluginWeb(c)
 	inJson := []byte("{}")
 	err := p.Unsubscribe(inJson)
 	assert.Error(t, err)
 }
 
 func TestPluginWeb_Unsubscribe_NonExistentSubscriber(t *testing.T) {
-	p := NewPluginWeb(&FakeKeeper{})
+	c := database.C("test_plugin_web_non_existent_subscriber")
+	p := NewPluginWeb(c)
 	subscribeJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(subscribeJson)
 	assert.NoError(t, err)
-	assert.Len(t, p.storage.Data, 1)
+	resCount, err := c.Find(bson.M{"eventname": "test"}).Count()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, resCount)
 	unsubscribeJson := []byte(`{"event_name": "test", "url": "bye"}`)
 	err = p.Unsubscribe(unsubscribeJson)
 	assert.Error(t, err)
-	assert.Len(t, p.storage.Data, 1)
+	resCount, err = c.Find(bson.M{"eventname": "test"}).Count()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, resCount)
 }
 
 func TestPluginWeb_ProcessEvent(t *testing.T) {
-	p := NewPluginWeb(&FakeKeeper{})
+	c := database.C("test_plugin_web_process_event")
+	p := NewPluginWeb(c)
 	expectedUrl := "test_url"
 	expectedData := []byte(`{"hello": "world"}`)
 	fakeClient := FakePostClient{t, expectedUrl, expectedData}

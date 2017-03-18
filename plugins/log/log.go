@@ -39,7 +39,3 @@ func (l Log) Unsubscribe(input []byte) error {
 func (l Log) LoadSubscriber(data []byte) error {
 	return nil
 }
-
-func (p Log) Loaded() {
-
-}

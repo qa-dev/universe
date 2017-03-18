@@ -9,7 +9,6 @@ type Plugin interface {
 	Subscribe(input []byte) error
 	Unsubscribe(input []byte) error
 	ProcessEvent(eventData event.Event)
-	Loaded()
 }
 
 type PluginInfo struct {
