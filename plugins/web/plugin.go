@@ -59,7 +59,7 @@ func (p PluginWeb) Unsubscribe(input []byte) error {
 	return err
 }
 
-func (p PluginWeb) ProcessEvent(eventData event.Event) {
+func (p PluginWeb) ProcessEvent(eventData *event.Event) {
 	for _, subscribeUrl := range p.storage.Data[eventData.Name] {
 		go p.sendRequest(subscribeUrl, eventData.Payload)
 	}

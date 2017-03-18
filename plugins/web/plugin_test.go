@@ -108,6 +108,6 @@ func TestPluginWeb_ProcessEvent(t *testing.T) {
 	data := event.Event{Name: "test_event", Payload: expectedData}
 	err := p.Subscribe([]byte(`{"event_name": "test_event", "url": "test_url"}`))
 	assert.NoError(t, err)
-	p.ProcessEvent(data)
+	p.ProcessEvent(&data)
 	time.Sleep(1 * time.Second)
 }

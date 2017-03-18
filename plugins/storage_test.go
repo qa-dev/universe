@@ -28,7 +28,7 @@ func (FakePlugin) Unsubscribe(input []byte) error {
 	return nil
 }
 
-func (FakePlugin) ProcessEvent(eventData event.Event) {}
+func (FakePlugin) ProcessEvent(eventData *event.Event) {}
 
 type MockObserver struct {
 	a *assert.Assertions
@@ -40,7 +40,7 @@ func (m MockObserver) GetPluginInfo() *PluginInfo {
 	return &PluginInfo{"Name", "name"}
 }
 
-func (m MockObserver) ProcessEvent(data event.Event) {
+func (m MockObserver) ProcessEvent(data *event.Event) {
 	m.Called(data)
 	m.a.Equal(string(testMsg), data.Name)
 	m.t.Log("MockObserver.Event called!")
@@ -66,9 +66,10 @@ func TestObservable_Add(t *testing.T) {
 	o := PluginStorage{}
 	ob1 := &MockObserver{a: a, t: t}
 
-	ob1.On("ProcessEvent", event.Event{string(testMsg), []byte(`{}`)}).Return(nil)
+	ob1.On("ProcessEvent", &event.Event{string(testMsg), []byte(`{}`)}).Return(nil)
 	o.Register(ob1)
-	o.ProcessEvent(event.Event{string(testMsg), []byte(`{}`)})
+	ev := event.Event{string(testMsg), []byte(`{}`)}
+	o.ProcessEvent(&ev)
 	time.Sleep(1 * time.Second)
 }
 
