@@ -81,3 +81,17 @@ func (p *PluginWeb) sendRequest(url string, payload []byte) {
 	// TODO: log statistics
 	p.client.Do(req)
 }
+
+func (p *PluginWeb) Loaded() {
+	index := mgo.Index{
+		Key:        []string{"eventname", "url"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err := p.collection.EnsureIndex(index)
+	if err != nil {
+		panic(err)
+	}
+}

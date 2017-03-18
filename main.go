@@ -50,6 +50,10 @@ func main() {
 	dispatcherService := dispatcher.NewDispatcher(eventRmq, pluginStorage)
 	dispatcherService.Run()
 
+	for _, plg := range pluginStorage.GetPlugins() {
+		plg.Loaded()
+	}
+
 	mux := http.NewServeMux()
 
 	mux.Handle("/e/", handlers.NewEventHandler(eventService))

@@ -3,6 +3,7 @@ package handlers
 import (
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"unicode/utf8"
 
 	"github.com/qa-dev/universe/event"
@@ -30,7 +31,7 @@ func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	payload, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}"`))
+		resp.Write([]byte(`{"error": ` + strconv.Quote(err.Error()) + `}`))
 		return
 	}
 
@@ -38,7 +39,7 @@ func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	err = h.eventService.Publish(e)
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}"`))
+		resp.Write([]byte(`{"error": ` + strconv.Quote(err.Error()) + `}`))
 		return
 	}
 

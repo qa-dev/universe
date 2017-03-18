@@ -19,9 +19,9 @@ func (FakePlugin) LoadSubscriber(data []byte) error {
 
 func (m FakePlugin) GetPluginInfo() *PluginInfo {
 	return &PluginInfo{
-		Name:                "Name",
-		Tag:                 "fake",
-		Version:             1,
+		Name:    "Name",
+		Tag:     "fake",
+		Version: 1,
 	}
 }
 
@@ -34,6 +34,7 @@ func (FakePlugin) Unsubscribe(input []byte) error {
 }
 
 func (FakePlugin) ProcessEvent(eventData event.Event) {}
+func (FakePlugin) Loaded()                            {}
 
 type MockObserver struct {
 	a *assert.Assertions
@@ -47,9 +48,9 @@ func (MockObserver) LoadSubscriber(data []byte) error {
 
 func (m MockObserver) GetPluginInfo() *PluginInfo {
 	return &PluginInfo{
-		Name:                "Name",
-		Tag:                 "name",
-		Version:             1,
+		Name:    "Name",
+		Tag:     "name",
+		Version: 1,
 	}
 }
 
@@ -72,6 +73,8 @@ func (m MockObserver) Unsubscribe(input []byte) error {
 	m.t.Log("MockObserver.UnsubscribeData called!")
 	return nil
 }
+
+func (m MockObserver) Loaded() {}
 
 func TestObservable_Add(t *testing.T) {
 	a := assert.New(t)

@@ -3,6 +3,7 @@ package handlers
 import (
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"unicode/utf8"
 
 	"github.com/qa-dev/universe/subscribe"
@@ -34,7 +35,7 @@ func (h *SubscribeHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request
 	err = h.subscribeService.ProcessSubscribe(pluginName, input)
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{"error": ` + strconv.Quote(err.Error()) + `}`))
 		return
 	}
 
