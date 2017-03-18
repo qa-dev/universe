@@ -8,7 +8,7 @@ type Plugin interface {
 	GetPluginInfo() *PluginInfo
 	Subscribe(input []byte) error
 	Unsubscribe(input []byte) error
-	ProcessEvent(eventData event.Event)
+	ProcessEvent(eventData *event.Event)
 }
 
 type PluginInfo struct {

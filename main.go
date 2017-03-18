@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/config"
@@ -14,7 +13,6 @@ import (
 	"github.com/qa-dev/universe/plugins"
 	logPlugin "github.com/qa-dev/universe/plugins/log"
 	"github.com/qa-dev/universe/plugins/web"
-	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 )
 
@@ -28,17 +26,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	eventRmq := rabbitmq.NewRabbitMQ(cfg.Rmq.Uri, cfg.Rmq.EventQueue)
-	time.Sleep(2 * time.Second)
-	defer eventRmq.Close()
+	//eventRmq := rabbitmq.NewRabbitMQ(cfg.Rmq.Uri, cfg.Rmq.EventQueue)
+	//time.Sleep(2 * time.Second)
+	//defer eventRmq.Close()
+
+	queue := event.NewEventQueue()
 
 	pluginStorage := plugins.NewPluginStorage()
 	pluginStorage.Register(web.NewPluginWeb())
 	pluginStorage.Register(logPlugin.NewLog())
 
-	eventService := event.NewEventService(eventRmq)
+	eventService := event.NewEventService(queue)
 	subscribeService := subscribe.NewSubscribeService(pluginStorage)
-	dispatcherService := dispatcher.NewDispatcher(eventRmq, pluginStorage)
+	dispatcherService := dispatcher.NewDispatcher(queue, pluginStorage)
 	dispatcherService.Run()
 
 	mux := http.NewServeMux()
