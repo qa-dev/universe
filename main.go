@@ -14,6 +14,9 @@ import (
 	logPlugin "github.com/qa-dev/universe/plugins/log"
 	"github.com/qa-dev/universe/plugins/web"
 	"github.com/qa-dev/universe/subscribe"
+	"github.com/qa-dev/universe/rabbitmq"
+	"time"
+	"github.com/qa-dev/universe/queue"
 )
 
 func main() {
@@ -26,19 +29,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//eventRmq := rabbitmq.NewRabbitMQ(cfg.Rmq.Uri, cfg.Rmq.EventQueue)
-	//time.Sleep(2 * time.Second)
-	//defer eventRmq.Close()
+	eventRmq := rabbitmq.NewRabbitMQ(cfg.Rmq.Uri, cfg.Rmq.EventQueue)
+	time.Sleep(2 * time.Second)
+	defer eventRmq.Close()
 
-	queue := event.NewEventQueue()
+	eventQueue := queue.NewQueue(eventRmq)
 
 	pluginStorage := plugins.NewPluginStorage()
 	pluginStorage.Register(web.NewPluginWeb())
 	pluginStorage.Register(logPlugin.NewLog())
 
-	eventService := event.NewEventService(queue)
+	eventService := event.NewEventService(eventQueue)
 	subscribeService := subscribe.NewSubscribeService(pluginStorage)
-	dispatcherService := dispatcher.NewDispatcher(queue, pluginStorage)
+	dispatcherService := dispatcher.NewDispatcher(eventQueue, pluginStorage)
 	dispatcherService.Run()
 
 	mux := http.NewServeMux()

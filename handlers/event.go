@@ -13,7 +13,7 @@ type EventHandler struct {
 }
 
 type EventPublisher interface {
-	Publish(event.Event) error
+	Publish(*event.Event) error
 }
 
 func NewEventHandler(eventService EventPublisher) *EventHandler {
@@ -35,7 +35,7 @@ func (h *EventHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	e := event.Event{eventName, payload}
-	err = h.eventService.Publish(e)
+	err = h.eventService.Publish(&e)
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write([]byte(`{"error": "` + err.Error() + `"}"`))

@@ -61,7 +61,7 @@ func TestDispatcher_Run(t *testing.T) {
 	dsp := NewDispatcher(queue, storage)
 	assert.NotNil(t, dsp)
 	dsp.Run()
-	err := eventService.Publish(event.Event{"test.event", requestData})
+	err := eventService.Publish(&event.Event{"test.event", requestData})
 	assert.NoError(t, err)
 	// TODO: assert log
 }
