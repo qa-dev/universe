@@ -30,7 +30,8 @@ func NewRabbitMQ(uri string, queueName string) *RabbitMQ {
 		uri:       uri,
 		queueName: queueName,
 	}
-	rabbit.buffer = make(chan interface{})
+	// без этого поытка добавить еще одно событие в буфер вешает реквест
+	rabbit.buffer = make(chan interface{}, 1000)
 	rabbit.errorCloseChan = make(chan *amqp.Error)
 	rabbit.reconnectWatchers = make([]chan *error, 0)
 	rabbit.reconnectWatchersMutex = &sync.Mutex{}
