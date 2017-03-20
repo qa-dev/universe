@@ -15,6 +15,7 @@ import (
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
+	"time"
 )
 
 var amqpUri string
@@ -57,6 +58,7 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 
 func TestNewDispatcher(t *testing.T) {
 	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	time.Sleep(2 * time.Second)
 	q := queue.NewQueue(rmq)
 	storage := plugins.NewPluginStorage()
 	dsp := NewDispatcher(q, storage)
@@ -65,6 +67,7 @@ func TestNewDispatcher(t *testing.T) {
 
 func TestDispatcher_Run(t *testing.T) {
 	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	time.Sleep(2 * time.Second)
 	q := queue.NewQueue(rmq)
 	storage := plugins.NewPluginStorage()
 	requestData := []byte(`{"test": "test"}`)
