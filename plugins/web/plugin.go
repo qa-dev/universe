@@ -10,33 +10,32 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/keeper"
 	"github.com/qa-dev/universe/plugins"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
-const PLUGIN_TAG string = "web"
+const PluginTag string = "web"
 
 type PluginWeb struct {
-	client     HttpRequester
-	collection *mgo.Collection
+	client HttpRequester
+	keeper *keeper.Keeper
 }
 
 type HttpRequester interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewPluginWeb(collection *mgo.Collection) *PluginWeb {
+func NewPluginWeb(kpr *keeper.Keeper) *PluginWeb {
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
-	return &PluginWeb{httpClient, collection}
+	return &PluginWeb{httpClient, kpr}
 }
 
 func (p *PluginWeb) GetPluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
 		Name:    "Web",
-		Tag:     PLUGIN_TAG,
+		Tag:     PluginTag,
 		Version: 1,
 	}
 }
@@ -49,7 +48,7 @@ func (p *PluginWeb) Subscribe(input []byte) error {
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
 	}
-	return p.collection.Insert(subscribeData)
+	return p.keeper.StoreSubscriber(PluginTag, subscribeData)
 }
 
 func (p *PluginWeb) Unsubscribe(input []byte) error {
@@ -60,12 +59,12 @@ func (p *PluginWeb) Unsubscribe(input []byte) error {
 		errorText := fmt.Sprintf("Invalid input data: %s", string(input))
 		return errors.New(errorText)
 	}
-	return p.collection.Remove(unsubscribeData)
+	return p.keeper.RemoveSubscriber(PluginTag, unsubscribeData)
 }
 
 func (p *PluginWeb) ProcessEvent(eventData event.Event) {
 	var result []SubscribeData
-	p.collection.Find(bson.M{"eventname": eventData.Name}).All(&result)
+	p.keeper.GetSubscribers(PluginTag, &result)
 	for _, data := range result {
 		go p.sendRequest(data.Url, eventData.Payload)
 	}
@@ -82,16 +81,4 @@ func (p *PluginWeb) sendRequest(url string, payload []byte) {
 	p.client.Do(req)
 }
 
-func (p *PluginWeb) Loaded() {
-	index := mgo.Index{
-		Key:        []string{"eventname", "url"},
-		Unique:     true,
-		DropDups:   true,
-		Background: true,
-		Sparse:     true,
-	}
-	err := p.collection.EnsureIndex(index)
-	if err != nil {
-		panic(err)
-	}
-}
+func (p *PluginWeb) Loaded() {}

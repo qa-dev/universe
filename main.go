@@ -39,10 +39,10 @@ func main() {
 		panic(err)
 	}
 
-	master := keeper.NewMongoMaster(msession)
+	kpr := keeper.NewKeeper(msession)
 
 	pluginStorage := plugins.NewPluginStorage()
-	pluginStorage.Register(web.NewPluginWeb(master.GetCollection("web")))
+	pluginStorage.Register(web.NewPluginWeb(kpr))
 	pluginStorage.Register(logPlugin.NewLog())
 
 	eventService := event.NewEventService(eventRmq)

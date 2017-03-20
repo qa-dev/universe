@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/keeper"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type FakeClosingBuffer struct {
@@ -44,6 +44,7 @@ func (c FakePostClient) Do(r *http.Request) (*http.Response, error) {
 	return response, nil
 }
 
+var kpr *keeper.Keeper
 var database *mgo.Database
 
 func init() {
@@ -53,85 +54,87 @@ func init() {
 		panic("cant connect mongo")
 	}
 	database = session.DB("test_plugin_web")
-	database.DropDatabase()
+	kpr = keeper.NewKeeper(session)
+	kpr.SetCustomDatabaseName("test_plugin_web")
 }
 
 func TestNewPluginWeb(t *testing.T) {
-	c := database.C("test_new_plugin_web")
-	p := NewPluginWeb(c)
-	assert.NotNil(t, p.collection)
+	p := NewPluginWeb(kpr)
+	assert.NotNil(t, p.keeper)
 }
 
 func TestPluginWeb_GetPluginInfo(t *testing.T) {
-	c := database.C("test_plugin_web_get_plugin_info")
-	p := NewPluginWeb(c)
+	p := NewPluginWeb(kpr)
 	assert.Equal(t, "web", p.GetPluginInfo().Tag)
 	assert.Equal(t, "Web", p.GetPluginInfo().Name)
 }
 
 func TestPluginWeb_Subscribe(t *testing.T) {
-	c := database.C("test_plugin_web_subscribe")
-	p := NewPluginWeb(c)
+	database.DropDatabase()
+	p := NewPluginWeb(kpr)
 	inJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(inJson)
 	assert.NoError(t, err)
-	resCount, err := c.Find(bson.M{"eventname": "test"}).Count()
+	var result []SubscribeData
+	err = kpr.GetSubscribers(PluginTag, &result)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, resCount)
+	assert.Equal(t, 1, len(result))
 }
 
 func TestPluginWeb_Subscribe_WrongInput(t *testing.T) {
-	c := database.C("test_plugin_web_wrong_input")
-	p := NewPluginWeb(c)
+	p := NewPluginWeb(kpr)
 	inJson := []byte("{}")
 	err := p.Subscribe(inJson)
 	assert.Error(t, err)
 }
 
 func TestPluginWeb_Unsubscribe(t *testing.T) {
-	c := database.C("test_plugin_web_unsubscribe")
-	p := NewPluginWeb(c)
+	database.DropDatabase()
+	p := NewPluginWeb(kpr)
 	inJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(inJson)
 	assert.NoError(t, err)
-	resCount, err := c.Find(bson.M{"eventname": "test"}).Count()
+	var result []SubscribeData
+	err = kpr.GetSubscribers(PluginTag, &result)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, resCount)
+	assert.Equal(t, 1, len(result))
 	err = p.Unsubscribe(inJson)
 	assert.NoError(t, err)
-	resCount, err = c.Find(bson.M{"eventname": "test"}).Count()
+	result = nil
+	err = kpr.GetSubscribers(PluginTag, &result)
 	assert.NoError(t, err)
-	assert.Equal(t, 0, resCount)
+	assert.Equal(t, 0, len(result))
 }
 
 func TestPluginWeb_Unsubscribe_WrongInput(t *testing.T) {
-	c := database.C("test_plugin_web_unsubscribe_wrong_input")
-	p := NewPluginWeb(c)
+	p := NewPluginWeb(kpr)
 	inJson := []byte("{}")
 	err := p.Unsubscribe(inJson)
 	assert.Error(t, err)
 }
 
 func TestPluginWeb_Unsubscribe_NonExistentSubscriber(t *testing.T) {
-	c := database.C("test_plugin_web_non_existent_subscriber")
-	p := NewPluginWeb(c)
+	database.DropDatabase()
+	p := NewPluginWeb(kpr)
 	subscribeJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(subscribeJson)
 	assert.NoError(t, err)
-	resCount, err := c.Find(bson.M{"eventname": "test"}).Count()
+	var result []SubscribeData
+	err = kpr.GetSubscribers(PluginTag, &result)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, resCount)
+	assert.Equal(t, 1, len(result))
 	unsubscribeJson := []byte(`{"event_name": "test", "url": "bye"}`)
 	err = p.Unsubscribe(unsubscribeJson)
 	assert.Error(t, err)
-	resCount, err = c.Find(bson.M{"eventname": "test"}).Count()
+	result = nil
+	err = kpr.GetSubscribers(PluginTag, &result)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, resCount)
+	assert.Equal(t, 1, len(result))
 }
 
 func TestPluginWeb_ProcessEvent(t *testing.T) {
-	c := database.C("test_plugin_web_process_event")
-	p := NewPluginWeb(c)
+	database.DropDatabase()
+	p := NewPluginWeb(kpr)
 	expectedUrl := "test_url"
 	expectedData := []byte(`{"hello": "world"}`)
 	fakeClient := FakePostClient{t, expectedUrl, expectedData}
