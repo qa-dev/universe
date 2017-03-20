@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/config"
@@ -14,10 +15,10 @@ import (
 	"github.com/qa-dev/universe/plugins"
 	logPlugin "github.com/qa-dev/universe/plugins/log"
 	"github.com/qa-dev/universe/plugins/web"
-	"github.com/qa-dev/universe/subscribe"
-	"github.com/qa-dev/universe/rabbitmq"
-	"time"
 	"github.com/qa-dev/universe/queue"
+	"github.com/qa-dev/universe/rabbitmq"
+	"github.com/qa-dev/universe/subscribe"
+	mgo "gopkg.in/mgo.v2"
 )
 
 func main() {
