@@ -6,5 +6,9 @@
   "rmq": {
     "uri": "amqp://guest:guest@127.0.0.1:5672/",
     "event_queue": "events"
+  },
+  "mongo": {
+    "host": "127.0.0.1",
+    "port": "27017"
   }
 }

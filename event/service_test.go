@@ -3,13 +3,13 @@ package event
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/stretchr/testify/assert"
-	"os"
 )
 
 var amqpUri string
@@ -47,6 +47,7 @@ func TestEventService_PushEvent(t *testing.T) {
 
 	err = es.Publish(Event{"test.event", []byte("test")})
 	assert.NoError(t, err)
+	time.Sleep(1 * time.Second)
 }
 
 func TestEventService_PushEvent_Blank(t *testing.T) {
