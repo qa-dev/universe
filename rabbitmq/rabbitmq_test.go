@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +15,7 @@ var amqpUri string
 func init() {
 	amqpUri = os.Getenv("AMQP_URI")
 	if amqpUri == "" {
-		log.Fatal("AMQP_URI is required to run rabbitmq tests")
+		amqpUri = "amqp://guest:guest@127.0.0.1:5672/"
 	}
 }
 
@@ -83,7 +82,7 @@ func TestRabbitMQ_PublishWithPriority(t *testing.T) {
 		"key": "value",
 	}
 	priority := uint8(10)
-	err := rmq.PublishWithPriority(expectedMsg, priority)
+	err := rmq.sendEventToRabbit(expectedMsg, priority)
 	a.NoError(err, "Unexpected error from PublishWithPriority")
 
 	msgs, err := rmq.channel.Consume(queueName, consumerName, true, true, false, false, nil)
@@ -96,7 +95,7 @@ func TestRabbitMQ_PublishWithPriority(t *testing.T) {
 	a.Equal(expectedMsg, actualMsg, "Send and recieved msgs are not equal")
 
 	brokenMsg := make(chan int)
-	err = rmq.PublishWithPriority(brokenMsg, priority)
+	err = rmq.sendEventToRabbit(brokenMsg, priority)
 	a.Error(err, "Expected error from PublishWithPriority doesn't exist")
 }
 
@@ -111,7 +110,7 @@ func TestRabbitMQ_Consume(t *testing.T) {
 	// Даем время на подключение
 	time.Sleep(5 * time.Second)
 
-	msgs, err := rmq.Consume(workerName)
+	msgs, err := rmq.GetConsumer(workerName)
 	a.NoError(err, "Unexpected error from Consume")
 
 	// Публикуем в очередь сообщение
@@ -119,11 +118,11 @@ func TestRabbitMQ_Consume(t *testing.T) {
 		"key": "value",
 	}
 	priority := uint8(10)
-	rmq.PublishWithPriority(expectedMsg, priority)
+	rmq.sendEventToRabbit(expectedMsg, priority)
 
 	// Читаем консьюмером сообщение и проверяем, что смогли это сделать корректно
 	d := <-msgs
-	defer d.Ack(false)
+	defer d.Ack()
 	expectedBody, _ := json.Marshal(expectedMsg)
 	a.Equal(expectedBody, d.Body(), "Unexpected body of recieved msg")
 	a.Equal(priority, d.Priority(), "Unexpected priority of recieved msg")

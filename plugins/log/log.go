@@ -22,7 +22,7 @@ func (l Log) GetPluginInfo() *plugins.PluginInfo {
 	}
 }
 
-func (l Log) ProcessEvent(eventData event.Event) {
+func (l Log) ProcessEvent(eventData *event.Event) {
 	l.logger.Info(eventData)
 }
 

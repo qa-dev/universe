@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/plugins"
-	"github.com/qa-dev/universe/rabbitmq"
+	"github.com/qa-dev/universe/queue"
 )
 
 type ClientInterface interface {
@@ -14,12 +15,12 @@ type ClientInterface interface {
 }
 
 type Dispatcher struct {
-	rmq           *rabbitmq.RabbitMQ
+	queue         *queue.Queue
 	pluginStorage *plugins.PluginStorage
 }
 
-func NewDispatcher(rmq *rabbitmq.RabbitMQ, storage *plugins.PluginStorage) *Dispatcher {
-	return &Dispatcher{rmq, storage}
+func NewDispatcher(queue *queue.Queue, storage *plugins.PluginStorage) *Dispatcher {
+	return &Dispatcher{queue, storage}
 }
 
 func (d *Dispatcher) Run() {
@@ -27,22 +28,32 @@ func (d *Dispatcher) Run() {
 }
 
 func (d *Dispatcher) worker() {
-	consumeObj, err := d.rmq.Consume("consumer")
+	msgs, err := d.queue.GetConsumer("consumer")
 	if err != nil {
-		panic(err)
+		log.Error("Error get consumer in event dispatcher worker")
 	}
-
 	for {
-		rawData := <-consumeObj
-		var e event.Event
-		err = json.Unmarshal(rawData.Body(), &e)
-		if err != nil {
-			// TODO log?
-			panic(err)
+		if d.queue.IsOnline() == false {
+			log.Info("Worker lost connection to queue. Waiting...")
+			backOnlineChan := make(chan *error)
+			d.queue.NotifyReconnect(backOnlineChan)
+			_ = <-backOnlineChan
+			newMsgs, err := d.queue.GetConsumer("consumer")
+			if err != nil {
+				log.Error("Error get consumer in event dispatcher worker")
+			}
+			msgs = newMsgs
+			log.Info("Worker established connection to queue")
 		}
-
-		d.pluginStorage.ProcessEvent(e)
-
-		rawData.Ack(false)
+		data := <-msgs
+		var ev event.Event
+		err = json.Unmarshal(data.Body(), &ev)
+		if err != nil {
+			data.Reject()
+			log.Error("Error unmarchal event in event dispatcher worker")
+			continue
+		}
+		d.pluginStorage.ProcessEvent(&ev)
+		data.Ack()
 	}
 }

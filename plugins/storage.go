@@ -19,11 +19,9 @@ func (o *PluginStorage) Register(v Plugin) {
 	o.plugins = append(o.plugins, v)
 }
 
-func (o *PluginStorage) ProcessEvent(eventData event.Event) {
+func (o *PluginStorage) ProcessEvent(eventData *event.Event) {
 	for _, ob := range o.plugins {
-		go func(o Plugin) {
-			o.ProcessEvent(eventData)
-		}(ob)
+		ob.ProcessEvent(eventData)
 	}
 }
 

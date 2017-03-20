@@ -8,11 +8,10 @@ import (
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/plugins"
+	"github.com/qa-dev/universe/queue"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +22,7 @@ var amqpUri string
 func init() {
 	amqpUri = os.Getenv("AMQP_URI")
 	if amqpUri == "" {
-		log.Fatal("AMQP_URI is required to run rabbitmq tests")
+		amqpUri = "amqp://guest:guest@127.0.0.1:5672/"
 	}
 }
 
@@ -57,30 +56,26 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestNewDispatcher(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_event_service_push_event_queue")
-	defer rmq.Close()
+	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := queue.NewQueue(rmq)
 	storage := plugins.NewPluginStorage()
-	// Даем время на подключение
-	time.Sleep(5 * time.Second)
-	dsp := NewDispatcher(rmq, storage)
-	assert.Equal(t, fmt.Sprintf("%p", rmq), fmt.Sprintf("%p", dsp.rmq))
+	dsp := NewDispatcher(q, storage)
+	assert.Equal(t, fmt.Sprintf("%p", q), fmt.Sprintf("%p", dsp.queue))
 }
 
 func TestDispatcher_Run(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_event_service_push_event_queue")
-	defer rmq.Close()
+	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := queue.NewQueue(rmq)
 	storage := plugins.NewPluginStorage()
-	// Даем время на подключение
-	time.Sleep(5 * time.Second)
 	requestData := []byte(`{"test": "test"}`)
 	subscrService := subscribe.NewSubscribeService(storage)
-	eventService := event.NewEventService(rmq)
+	eventService := event.NewEventService(q)
 	subscribeData := []byte(`{"test": "hello"}`)
 	subscrService.ProcessSubscribe("log", subscribeData)
-	dsp := NewDispatcher(rmq, storage)
+	dsp := NewDispatcher(q, storage)
 	assert.NotNil(t, dsp)
 	dsp.Run()
-	err := eventService.Publish(event.Event{"test.event", requestData})
+	err := eventService.Publish(&event.Event{"test.event", requestData})
 	assert.NoError(t, err)
 	// TODO: assert log
 }

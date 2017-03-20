@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/config"
@@ -15,9 +14,10 @@ import (
 	"github.com/qa-dev/universe/plugins"
 	logPlugin "github.com/qa-dev/universe/plugins/log"
 	"github.com/qa-dev/universe/plugins/web"
-	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
-	"gopkg.in/mgo.v2"
+	"github.com/qa-dev/universe/rabbitmq"
+	"time"
+	"github.com/qa-dev/universe/queue"
 )
 
 func main() {
@@ -34,6 +34,8 @@ func main() {
 	time.Sleep(2 * time.Second)
 	defer eventRmq.Close()
 
+	eventQueue := queue.NewQueue(eventRmq)
+
 	msession, err := mgo.Dial(cfg.Mongo.Host + ":" + cfg.Mongo.Port)
 	if err != nil {
 		panic(err)
@@ -45,9 +47,9 @@ func main() {
 	pluginStorage.Register(web.NewPluginWeb(kpr))
 	pluginStorage.Register(logPlugin.NewLog())
 
-	eventService := event.NewEventService(eventRmq)
+	eventService := event.NewEventService(eventQueue)
 	subscribeService := subscribe.NewSubscribeService(pluginStorage)
-	dispatcherService := dispatcher.NewDispatcher(eventRmq, pluginStorage)
+	dispatcherService := dispatcher.NewDispatcher(eventQueue, pluginStorage)
 	dispatcherService.Run()
 
 	for _, plg := range pluginStorage.GetPlugins() {

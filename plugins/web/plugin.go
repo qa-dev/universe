@@ -62,7 +62,7 @@ func (p *PluginWeb) Unsubscribe(input []byte) error {
 	return p.keeper.RemoveSubscriber(PluginTag, unsubscribeData)
 }
 
-func (p *PluginWeb) ProcessEvent(eventData event.Event) {
+func (p *PluginWeb) ProcessEvent(eventData *event.Event) {
 	var result []SubscribeData
 	p.keeper.GetSubscribers(PluginTag, &result)
 	for _, data := range result {

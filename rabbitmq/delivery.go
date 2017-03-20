@@ -30,8 +30,12 @@ func (dm *DeliveryManager) retranslate() {
 	}
 }
 
-func (d Delivery) Ack(multiple bool) error {
-	return d.msg.Ack(multiple)
+func (d Delivery) Ack() error {
+	return d.msg.Ack(false)
+}
+
+func (d Delivery) Reject() error {
+	return d.msg.Reject(true)
 }
 
 func (d Delivery) Body() []byte {

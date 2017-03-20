@@ -2,6 +2,8 @@ package rabbitmq
 
 import (
 	"encoding/json"
+	"errors"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -11,83 +13,151 @@ import (
 const QueueMaxPriority int16 = 255
 
 type RabbitMQ struct {
-	connection     *amqp.Connection
-	channel        *amqp.Channel
-	uri            string
-	queueName      string
-	closeError     chan *amqp.Error
-	shouldBeClosed bool
+	connection             *amqp.Connection
+	channel                *amqp.Channel
+	isOnline               bool
+	errorCloseChan         chan *amqp.Error
+	uri                    string
+	queueName              string
+	buffer                 chan interface{}
+	reconnectWatchers      []chan *error
+	reconnectWatchersMutex *sync.Mutex
 }
 
 func NewRabbitMQ(uri string, queueName string) *RabbitMQ {
-	r := &RabbitMQ{uri: uri, queueName: queueName, shouldBeClosed: false}
-
-	r.closeError = make(chan *amqp.Error)
-	// Запускаем коннектор в горутине, который ждет ошибку коннекта и реконнектит
-	go r.checkConnection()
-	// Отправляем "ошибку" для первого запуска
-	r.closeError <- amqp.ErrClosed
-
-	return r
-}
-
-func (r *RabbitMQ) connect() {
-	for {
-		conn, err := amqp.Dial(r.uri)
-		if err == nil {
-			r.connection = conn
-			return
-		}
-		log.Println(err)
-		log.Printf("Trying to reconnect to RabbitMQ at %s", r.uri)
-		time.Sleep(3000 * time.Millisecond)
+	rabbit := RabbitMQ{
+		isOnline:  false,
+		uri:       uri,
+		queueName: queueName,
 	}
-}
-
-func (r *RabbitMQ) checkConnection() {
-	var rabbitErr *amqp.Error
-	for {
-		rabbitErr = <-r.closeError
-		if rabbitErr != nil {
-			log.Printf("Connecting to %s", r.uri)
-
-			r.connect()
-
-			r.closeError = make(chan *amqp.Error)
-			r.connection.NotifyClose(r.closeError)
-
-			ch, err := r.connection.Channel()
-			if err != nil {
-				log.Println(err)
-			}
-			r.channel = ch
-			r.DeclareQueue(r.queueName)
-		}
-	}
+	// без этого поытка добавить еще одно событие в буфер вешает реквест
+	rabbit.buffer = make(chan interface{}, 1000)
+	rabbit.errorCloseChan = make(chan *amqp.Error)
+	rabbit.reconnectWatchers = make([]chan *error, 0)
+	rabbit.reconnectWatchersMutex = &sync.Mutex{}
+	go rabbit.monitorConnection()
+	go rabbit.runBufferWorker()
+	// first error for connect
+	rabbit.errorCloseChan <- amqp.ErrClosed
+	return &rabbit
 }
 
 func (r *RabbitMQ) Close() {
-	r.connection.Close()
 	r.channel.Close()
+	r.connection.Close()
 }
 
-// PublishWithPriority упаковывает msg в JSON и отправляет по ch каналу
-// с ключем routingKey с приоритетом
-func (r *RabbitMQ) PublishWithPriority(msg interface{}, priority uint8) error {
-	return r.publishToEx("", r.queueName, msg, priority)
+func (r *RabbitMQ) monitorConnection() {
+	log.Info("Starting monitoring rabbitmq connection...")
+	for {
+		if err := <-r.errorCloseChan; err != nil {
+			log.Info("Lost connection to rabbitmq.")
+			log.Info(err)
+			r.isOnline = false
+			r.connect()
+		}
+	}
 }
 
-// PublishToEx упаковывает msg в JSON и отправляет по ch каналу
-// с ключем routingKey в exchange
-func (r *RabbitMQ) publishToEx(exchange, routingKey string, msg interface{}, priority uint8) error {
+func (r *RabbitMQ) connect() {
+	try := 0
+	for {
+		try += 1
+		log.Infof("Reconnecting to rabbitmq... try %d...", try)
+		conn, err := amqp.Dial(r.uri)
+		if err != nil {
+			log.Infof("Cant connect to amqp %s", r.uri)
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		r.connection = conn
+		r.errorCloseChan = make(chan *amqp.Error)
+		r.connection.NotifyClose(r.errorCloseChan)
+		ch, err := conn.Channel()
+		if err != nil {
+			log.Info(err)
+			log.Info("Error getting channel, reconnecting.")
+			r.connection.Close()
+			continue
+		}
+		r.channel = ch
+		_, err = r.DeclareQueue(r.queueName)
+		if err != nil {
+			log.Info(err)
+			log.Info("Error declaring queue, reconnecting.")
+			r.channel.Close()
+			r.connection.Close()
+			continue
+		}
+
+		r.sendReconnectNotifies(errors.New("reconnected"))
+		r.isOnline = true
+		log.Infof("Connection to rabbitmq established in %d tries.", try)
+		return
+	}
+}
+
+func (r *RabbitMQ) NotifyReconnect(receiver chan *error) {
+	r.reconnectWatchersMutex.Lock()
+	r.reconnectWatchers = append(r.reconnectWatchers, receiver)
+	r.reconnectWatchersMutex.Unlock()
+}
+
+func (r *RabbitMQ) sendReconnectNotifies(err error) {
+	r.reconnectWatchersMutex.Lock()
+	observers := make([]chan *error, len(r.reconnectWatchers))
+	copy(observers, r.reconnectWatchers)
+	r.reconnectWatchersMutex.Unlock()
+	for _, c := range observers {
+		c <- &err
+	}
+}
+
+func (r *RabbitMQ) DeclareQueue(name string) (*amqp.Queue, error) {
+	args := make(amqp.Table)
+	args["x-max-priority"] = QueueMaxPriority
+	q, err := r.channel.QueueDeclare(
+		name,  // name
+		true,  // durable
+		false, // delete when unused
+		false, // exclusive
+		false, // no-wait
+		args,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &q, nil
+}
+
+func (r *RabbitMQ) IsOnline() bool {
+	return r.isOnline
+}
+
+func (r *RabbitMQ) SendEvent(event interface{}) {
+	r.buffer <- event
+}
+
+func (r *RabbitMQ) runBufferWorker() {
+	for {
+		ev := <-r.buffer
+		// wait for rabbit online then immediately send event
+		for r.IsOnline() == false {
+			time.Sleep(500 * time.Millisecond)
+		}
+		r.sendEventToRabbit(ev, 1)
+	}
+}
+
+func (r *RabbitMQ) sendEventToRabbit(msg interface{}, priority uint8) error {
 	body, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
 	//Publish message to RMQ
 	err = r.channel.Publish(
-		exchange,
-		routingKey,
+		"",
+		r.queueName,
 		false, // mandatory
 		false, // immediate
 		amqp.Publishing{
@@ -99,7 +169,7 @@ func (r *RabbitMQ) publishToEx(exchange, routingKey string, msg interface{}, pri
 }
 
 // Вычитываем сообщения по одному из очереди.
-func (r *RabbitMQ) Consume(workerName string) (<-chan Delivery, error) {
+func (r *RabbitMQ) GetConsumer(workerName string) (<-chan Delivery, error) {
 	err := r.channel.Qos(
 		1,     // prefetch count
 		0,     // prefetch size
@@ -122,21 +192,4 @@ func (r *RabbitMQ) Consume(workerName string) (<-chan Delivery, error) {
 		return nil, err
 	}
 	return newDelivery(msgs), nil
-}
-
-func (r *RabbitMQ) DeclareQueue(queueName string) (*amqp.Queue, error) {
-	args := make(amqp.Table)
-	args["x-max-priority"] = QueueMaxPriority
-	q, err := r.channel.QueueDeclare(
-		queueName, // name
-		false,     // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		args,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &q, nil
 }
