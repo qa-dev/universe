@@ -6,13 +6,25 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/plugins"
+	"github.com/qa-dev/universe/queue"
+	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
 )
+
+var amqpUri string
+
+func init() {
+	amqpUri = os.Getenv("AMQP_URI")
+	if amqpUri == "" {
+		amqpUri = "amqp://guest:guest@127.0.0.1:5672/"
+	}
+}
 
 type FakeClosingBuffer struct {
 	*bytes.Buffer
@@ -44,21 +56,23 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestNewDispatcher(t *testing.T) {
-	queue := event.NewEventQueue()
+	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := queue.NewQueue(rmq)
 	storage := plugins.NewPluginStorage()
-	dsp := NewDispatcher(queue, storage)
-	assert.Equal(t, fmt.Sprintf("%p", queue), fmt.Sprintf("%p", dsp.queue))
+	dsp := NewDispatcher(q, storage)
+	assert.Equal(t, fmt.Sprintf("%p", q), fmt.Sprintf("%p", dsp.queue))
 }
 
 func TestDispatcher_Run(t *testing.T) {
-	queue := event.NewEventQueue()
+	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := queue.NewQueue(rmq)
 	storage := plugins.NewPluginStorage()
 	requestData := []byte(`{"test": "test"}`)
 	subscrService := subscribe.NewSubscribeService(storage)
-	eventService := event.NewEventService(queue)
+	eventService := event.NewEventService(q)
 	subscribeData := []byte(`{"test": "hello"}`)
 	subscrService.ProcessSubscribe("log", subscribeData)
-	dsp := NewDispatcher(queue, storage)
+	dsp := NewDispatcher(q, storage)
 	assert.NotNil(t, dsp)
 	dsp.Run()
 	err := eventService.Publish(&event.Event{"test.event", requestData})

@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	//log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +16,6 @@ func init() {
 	amqpUri = os.Getenv("AMQP_URI")
 	if amqpUri == "" {
 		amqpUri = "amqp://guest:guest@127.0.0.1:5672/"
-		//log.Fatal("AMQP_URI is required to run rabbitmq tests")
 	}
 }
 
