@@ -107,6 +107,7 @@ func (r *RabbitMQ) sendReconnectNotifies(err error) {
 	r.reconnectWatchersMutex.Lock()
 	observers := make([]chan *error, len(r.reconnectWatchers))
 	copy(observers, r.reconnectWatchers)
+	r.reconnectWatchers = make([]chan *error, 0)
 	r.reconnectWatchersMutex.Unlock()
 	for _, c := range observers {
 		c <- &err
