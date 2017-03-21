@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/plugins"
@@ -15,7 +16,6 @@ import (
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
-	"time"
 )
 
 var amqpUri string

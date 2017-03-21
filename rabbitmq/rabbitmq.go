@@ -135,7 +135,9 @@ func (r *RabbitMQ) IsOnline() bool {
 }
 
 func (r *RabbitMQ) SendEvent(event interface{}) {
-	r.buffer <- event
+	go func() {
+		r.buffer <- event
+	}()
 }
 
 func (r *RabbitMQ) runBufferWorker() {
