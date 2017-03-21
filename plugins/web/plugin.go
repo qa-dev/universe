@@ -36,7 +36,6 @@ func (p *PluginWeb) GetPluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
 		Name:    "Web",
 		Tag:     PluginTag,
-		Version: 1,
 	}
 }
 

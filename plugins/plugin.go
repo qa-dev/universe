@@ -13,7 +13,6 @@ type Plugin interface {
 }
 
 type PluginInfo struct {
-	Name                string
-	Tag                 string
-	Version             int
+	Name string
+	Tag  string
 }

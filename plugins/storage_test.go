@@ -21,7 +21,6 @@ func (m FakePlugin) GetPluginInfo() *PluginInfo {
 	return &PluginInfo{
 		Name:    "Name",
 		Tag:     "fake",
-		Version: 1,
 	}
 }
 
@@ -50,7 +49,6 @@ func (m MockObserver) GetPluginInfo() *PluginInfo {
 	return &PluginInfo{
 		Name:    "Name",
 		Tag:     "name",
-		Version: 1,
 	}
 }
 
