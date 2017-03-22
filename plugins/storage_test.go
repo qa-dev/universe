@@ -19,8 +19,8 @@ func (FakePlugin) LoadSubscriber(data []byte) error {
 
 func (m FakePlugin) GetPluginInfo() *PluginInfo {
 	return &PluginInfo{
-		Name:    "Name",
-		Tag:     "fake",
+		Name: "Name",
+		Tag:  "fake",
 	}
 }
 
@@ -32,7 +32,7 @@ func (FakePlugin) Unsubscribe(input []byte) error {
 	return nil
 }
 
-func (FakePlugin) Loaded()                            {}
+func (FakePlugin) Loaded()                             {}
 func (FakePlugin) ProcessEvent(eventData *event.Event) {}
 
 type MockObserver struct {
@@ -47,8 +47,8 @@ func (MockObserver) LoadSubscriber(data []byte) error {
 
 func (m MockObserver) GetPluginInfo() *PluginInfo {
 	return &PluginInfo{
-		Name:    "Name",
-		Tag:     "name",
+		Name: "Name",
+		Tag:  "name",
 	}
 }
 

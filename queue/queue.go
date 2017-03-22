@@ -25,6 +25,6 @@ func (q *Queue) IsOnline() bool {
 	return q.rabbit.IsOnline()
 }
 
-func (q *Queue) NotifyReconnect(receiver chan *error) {
+func (q *Queue) NotifyReconnect(receiver chan bool) {
 	q.rabbit.NotifyReconnect(receiver)
 }

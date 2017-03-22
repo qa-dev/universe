@@ -35,7 +35,7 @@ func (d *Dispatcher) worker() {
 	for {
 		if d.queue.IsOnline() == false {
 			log.Info("Worker lost connection to queue. Waiting...")
-			backOnlineChan := make(chan *error)
+			backOnlineChan := make(chan bool)
 			d.queue.NotifyReconnect(backOnlineChan)
 			_ = <-backOnlineChan
 			newMsgs, err := d.queue.GetConsumer("consumer")

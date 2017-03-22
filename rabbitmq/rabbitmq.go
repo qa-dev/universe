@@ -20,7 +20,7 @@ type RabbitMQ struct {
 	uri                    string
 	queueName              string
 	buffer                 chan interface{}
-	reconnectWatchers      []chan *error
+	reconnectWatchers      []chan bool
 	reconnectWatchersMutex *sync.Mutex
 }
 
@@ -33,7 +33,7 @@ func NewRabbitMQ(uri string, queueName string) *RabbitMQ {
 	// без этого поытка добавить еще одно событие в буфер вешает реквест
 	rabbit.buffer = make(chan interface{}, 1000)
 	rabbit.errorCloseChan = make(chan *amqp.Error)
-	rabbit.reconnectWatchers = make([]chan *error, 0)
+	rabbit.reconnectWatchers = make([]chan bool, 0)
 	rabbit.reconnectWatchersMutex = &sync.Mutex{}
 	go rabbit.monitorConnection()
 	go rabbit.runBufferWorker()
@@ -97,7 +97,7 @@ func (r *RabbitMQ) connect() {
 	}
 }
 
-func (r *RabbitMQ) NotifyReconnect(receiver chan *error) {
+func (r *RabbitMQ) NotifyReconnect(receiver chan bool) {
 	r.reconnectWatchersMutex.Lock()
 	r.reconnectWatchers = append(r.reconnectWatchers, receiver)
 	r.reconnectWatchersMutex.Unlock()
@@ -105,12 +105,12 @@ func (r *RabbitMQ) NotifyReconnect(receiver chan *error) {
 
 func (r *RabbitMQ) sendReconnectNotifies(err error) {
 	r.reconnectWatchersMutex.Lock()
-	observers := make([]chan *error, len(r.reconnectWatchers))
+	observers := make([]chan bool, len(r.reconnectWatchers))
 	copy(observers, r.reconnectWatchers)
-	r.reconnectWatchers = make([]chan *error, 0)
+	r.reconnectWatchers = make([]chan bool, 0)
 	r.reconnectWatchersMutex.Unlock()
 	for _, c := range observers {
-		c <- &err
+		c <- true
 	}
 }
 
