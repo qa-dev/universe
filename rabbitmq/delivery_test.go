@@ -49,5 +49,5 @@ func TestDelivery(t *testing.T) {
 	msg := <-deliveryCh
 	a.Equal(d.Body, msg.Body(), "Unexpected body of recieved msg")
 	a.Equal(d.Priority, msg.Priority(), "Unexpected priority of recieved msg")
-	a.NoError(msg.Ack(false))
+	a.NoError(msg.Ack())
 }

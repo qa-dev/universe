@@ -3,13 +3,13 @@ package event
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/stretchr/testify/assert"
-	"os"
 )
 
 var amqpUri string
@@ -22,41 +22,39 @@ func init() {
 }
 
 func TestNewEventService(t *testing.T) {
-	rmq := &rabbitmq.RabbitMQ{}
-	es := NewEventService(rmq)
-	assert.Equal(t, fmt.Sprintf("%p", rmq), fmt.Sprintf("%p", es.rmq))
+	q := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	time.Sleep(2 * time.Second)
+	es := NewEventService(q)
+	assert.Equal(t, fmt.Sprintf("%p", q), fmt.Sprintf("%p", es.queue))
 }
 
 func TestEventService_PushEvent(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_event_service_push_event_queue")
-	defer rmq.Close()
-	// Даем время на подключение
-	time.Sleep(5 * time.Second)
-	es := NewEventService(rmq)
-
-	consumeObj, err := rmq.Consume("test_consumer")
-	assert.NoError(t, err)
+	q := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	time.Sleep(2 * time.Second)
+	es := NewEventService(q)
 
 	go func() {
-		raw := <-consumeObj
+		msgs, err := q.GetConsumer("test_consumer")
+		assert.NoError(t, err)
+		data := <-msgs
 		var e Event
-		err = json.Unmarshal(raw.Body(), &e)
+		err = json.Unmarshal(data.Body(), &e)
+		data.Ack()
 		assert.NoError(t, err)
 		assert.Equal(t, "test.event", e.Name, "Wrong event name generated")
 	}()
 
-	err = es.Publish(Event{"test.event", []byte("test")})
+	err := es.Publish(&Event{"test.event", []byte("test")})
 	assert.NoError(t, err)
+	time.Sleep(1 * time.Second)
 }
 
 func TestEventService_PushEvent_Blank(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_event_service_push_event_queue")
-	defer rmq.Close()
-	// Даем время на подключение
-	time.Sleep(5 * time.Second)
-	es := NewEventService(rmq)
+	q := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	time.Sleep(2 * time.Second)
+	es := NewEventService(q)
 
-	err := es.Publish(Event{"", []byte("test")})
+	err := es.Publish(&Event{"", []byte("test")})
 
 	assert.Error(t, err)
 	assert.Equal(t, "BLANK EVENT NAME", err.Error())

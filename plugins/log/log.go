@@ -15,10 +15,13 @@ func NewLog() Log {
 }
 
 func (l Log) GetPluginInfo() *plugins.PluginInfo {
-	return &plugins.PluginInfo{"Log", "log"}
+	return &plugins.PluginInfo{
+		Name: "Log",
+		Tag:  "log",
+	}
 }
 
-func (l Log) ProcessEvent(eventData event.Event) {
+func (l Log) ProcessEvent(eventData *event.Event) {
 	l.logger.Info(eventData)
 }
 
@@ -31,3 +34,9 @@ func (l Log) Unsubscribe(input []byte) error {
 	l.logger.Info(string(input))
 	return nil
 }
+
+func (l Log) LoadSubscriber(data []byte) error {
+	return nil
+}
+
+func (l Log) Loaded() {}

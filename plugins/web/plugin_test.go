@@ -5,11 +5,14 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/qa-dev/universe/event"
+	"github.com/qa-dev/universe/keeper"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/mgo.v2"
 )
 
 type FakeClosingBuffer struct {
@@ -41,66 +44,97 @@ func (c FakePostClient) Do(r *http.Request) (*http.Response, error) {
 	return response, nil
 }
 
+var kpr *keeper.Keeper
+var database *mgo.Database
+
+func init() {
+	mongoUri := os.Getenv("MONGO_URI")
+	session, err := mgo.Dial(mongoUri)
+	if err != nil {
+		panic("cant connect mongo")
+	}
+	database = session.DB("test_plugin_web")
+	kpr = keeper.NewKeeper(session)
+	kpr.SetCustomDatabaseName("test_plugin_web")
+}
+
 func TestNewPluginWeb(t *testing.T) {
-	p := NewPluginWeb()
-	assert.NotNil(t, p.storage)
+	p := NewPluginWeb(kpr)
+	assert.NotNil(t, p.keeper)
 }
 
 func TestPluginWeb_GetPluginInfo(t *testing.T) {
-	p := NewPluginWeb()
+	p := NewPluginWeb(kpr)
 	assert.Equal(t, "web", p.GetPluginInfo().Tag)
 	assert.Equal(t, "Web", p.GetPluginInfo().Name)
 }
 
 func TestPluginWeb_Subscribe(t *testing.T) {
-	p := NewPluginWeb()
+	database.DropDatabase()
+	p := NewPluginWeb(kpr)
 	inJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(inJson)
 	assert.NoError(t, err)
-	assert.Len(t, p.storage.Data, 1)
-	assert.Len(t, p.storage.Data["test"], 1)
-	assert.Equal(t, "hello", p.storage.Data["test"][0])
+	var result []SubscribeData
+	err = kpr.GetSubscribers(PluginTag, &result)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(result))
 }
 
 func TestPluginWeb_Subscribe_WrongInput(t *testing.T) {
-	p := NewPluginWeb()
+	p := NewPluginWeb(kpr)
 	inJson := []byte("{}")
 	err := p.Subscribe(inJson)
 	assert.Error(t, err)
 }
 
 func TestPluginWeb_Unsubscribe(t *testing.T) {
-	p := NewPluginWeb()
+	database.DropDatabase()
+	p := NewPluginWeb(kpr)
 	inJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(inJson)
 	assert.NoError(t, err)
-	assert.Len(t, p.storage.Data, 1)
+	var result []SubscribeData
+	err = kpr.GetSubscribers(PluginTag, &result)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(result))
 	err = p.Unsubscribe(inJson)
 	assert.NoError(t, err)
-	assert.Len(t, p.storage.Data, 0)
+	result = nil
+	err = kpr.GetSubscribers(PluginTag, &result)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(result))
 }
 
 func TestPluginWeb_Unsubscribe_WrongInput(t *testing.T) {
-	p := NewPluginWeb()
+	p := NewPluginWeb(kpr)
 	inJson := []byte("{}")
 	err := p.Unsubscribe(inJson)
 	assert.Error(t, err)
 }
 
 func TestPluginWeb_Unsubscribe_NonExistentSubscriber(t *testing.T) {
-	p := NewPluginWeb()
+	database.DropDatabase()
+	p := NewPluginWeb(kpr)
 	subscribeJson := []byte(`{"event_name": "test", "url": "hello"}`)
 	err := p.Subscribe(subscribeJson)
 	assert.NoError(t, err)
-	assert.Len(t, p.storage.Data, 1)
+	var result []SubscribeData
+	err = kpr.GetSubscribers(PluginTag, &result)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(result))
 	unsubscribeJson := []byte(`{"event_name": "test", "url": "bye"}`)
 	err = p.Unsubscribe(unsubscribeJson)
 	assert.Error(t, err)
-	assert.Len(t, p.storage.Data, 1)
+	result = nil
+	err = kpr.GetSubscribers(PluginTag, &result)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(result))
 }
 
 func TestPluginWeb_ProcessEvent(t *testing.T) {
-	p := NewPluginWeb()
+	database.DropDatabase()
+	p := NewPluginWeb(kpr)
 	expectedUrl := "test_url"
 	expectedData := []byte(`{"hello": "world"}`)
 	fakeClient := FakePostClient{t, expectedUrl, expectedData}
@@ -108,6 +142,6 @@ func TestPluginWeb_ProcessEvent(t *testing.T) {
 	data := event.Event{Name: "test_event", Payload: expectedData}
 	err := p.Subscribe([]byte(`{"event_name": "test_event", "url": "test_url"}`))
 	assert.NoError(t, err)
-	p.ProcessEvent(data)
+	p.ProcessEvent(&data)
 	time.Sleep(1 * time.Second)
 }

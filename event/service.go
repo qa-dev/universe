@@ -8,19 +8,19 @@ import (
 )
 
 type EventService struct {
-	rmq *rabbitmq.RabbitMQ
+	queue *rabbitmq.RabbitMQ
 }
 
-func NewEventService(rmq *rabbitmq.RabbitMQ) *EventService {
-	return &EventService{rmq}
+func NewEventService(queue *rabbitmq.RabbitMQ) *EventService {
+	return &EventService{queue}
 }
 
-func (e *EventService) Publish(ev Event) error {
+func (e *EventService) Publish(ev *Event) error {
 	if ev.Name == "" {
 		log.Println("Got blank event name")
 		return errors.New("BLANK EVENT NAME")
 	}
 	log.Println("Got event name", ev.Name)
-	e.rmq.PublishWithPriority(ev, 1)
+	e.queue.Publish(ev)
 	return nil
 }
