@@ -42,6 +42,7 @@ func main() {
 	kpr := keeper.NewKeeper(msession)
 
 	pluginStorage := plugins.NewPluginStorage()
+	//TODO: keeper надо прокидывать не в плагин, а в subscribe и в dispatcher
 	pluginStorage.Register(web.NewPluginWeb(kpr))
 	pluginStorage.Register(logPlugin.NewLog())
 
