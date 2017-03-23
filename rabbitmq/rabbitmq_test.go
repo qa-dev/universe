@@ -83,7 +83,7 @@ func TestRabbitMQ_PublishWithPriority(t *testing.T) {
 		"key": "value",
 	}
 	priority := uint8(10)
-	err := rmq.sendEventToRabbit(expectedMsg, priority)
+	err := rmq.publishToExchange(expectedMsg, priority)
 	a.NoError(err, "Unexpected error from PublishWithPriority")
 
 	msgs, err := rmq.channel.Consume(queueName, consumerName, true, true, false, false, nil)
@@ -96,7 +96,7 @@ func TestRabbitMQ_PublishWithPriority(t *testing.T) {
 	a.Equal(expectedMsg, actualMsg, "Send and recieved msgs are not equal")
 
 	brokenMsg := make(chan int)
-	err = rmq.sendEventToRabbit(brokenMsg, priority)
+	err = rmq.publishToExchange(brokenMsg, priority)
 	a.Error(err, "Expected error from PublishWithPriority doesn't exist")
 }
 
@@ -119,7 +119,7 @@ func TestRabbitMQ_Consume(t *testing.T) {
 		"key": "value",
 	}
 	priority := uint8(10)
-	rmq.sendEventToRabbit(expectedMsg, priority)
+	rmq.publishToExchange(expectedMsg, priority)
 
 	// Читаем консьюмером сообщение и проверяем, что смогли это сделать корректно
 	d := <-msgs

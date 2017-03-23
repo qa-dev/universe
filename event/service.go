@@ -4,14 +4,14 @@ import (
 	"errors"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/qa-dev/universe/queue"
+	"github.com/qa-dev/universe/rabbitmq"
 )
 
 type EventService struct {
-	queue *queue.Queue
+	queue *rabbitmq.RabbitMQ
 }
 
-func NewEventService(queue *queue.Queue) *EventService {
+func NewEventService(queue *rabbitmq.RabbitMQ) *EventService {
 	return &EventService{queue}
 }
 
@@ -21,6 +21,6 @@ func (e *EventService) Publish(ev *Event) error {
 		return errors.New("BLANK EVENT NAME")
 	}
 	log.Println("Got event name", ev.Name)
-	e.queue.SendEvent(ev)
+	e.queue.Publish(ev)
 	return nil
 }

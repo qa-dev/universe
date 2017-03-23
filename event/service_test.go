@@ -8,7 +8,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/qa-dev/universe/queue"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,17 +22,15 @@ func init() {
 }
 
 func TestNewEventService(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
 	time.Sleep(2 * time.Second)
-	q := queue.NewQueue(rmq)
 	es := NewEventService(q)
 	assert.Equal(t, fmt.Sprintf("%p", q), fmt.Sprintf("%p", es.queue))
 }
 
 func TestEventService_PushEvent(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
 	time.Sleep(2 * time.Second)
-	q := queue.NewQueue(rmq)
 	es := NewEventService(q)
 
 	go func() {
@@ -53,9 +50,8 @@ func TestEventService_PushEvent(t *testing.T) {
 }
 
 func TestEventService_PushEvent_Blank(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
 	time.Sleep(2 * time.Second)
-	q := queue.NewQueue(rmq)
 	es := NewEventService(q)
 
 	err := es.Publish(&Event{"", []byte("test")})

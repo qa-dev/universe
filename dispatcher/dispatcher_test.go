@@ -13,7 +13,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/plugins"
-	"github.com/qa-dev/universe/queue"
 	"github.com/qa-dev/universe/rabbitmq"
 	"github.com/qa-dev/universe/subscribe"
 	"github.com/stretchr/testify/assert"
@@ -58,18 +57,16 @@ func (c *FakePostClient) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestNewDispatcher(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
 	time.Sleep(2 * time.Second)
-	q := queue.NewQueue(rmq)
 	storage := plugins.NewPluginStorage()
 	dsp := NewDispatcher(q, storage)
 	assert.Equal(t, fmt.Sprintf("%p", q), fmt.Sprintf("%p", dsp.queue))
 }
 
 func TestDispatcher_Run(t *testing.T) {
-	rmq := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
+	q := rabbitmq.NewRabbitMQ(amqpUri, "test_new_dispatcher")
 	time.Sleep(2 * time.Second)
-	q := queue.NewQueue(rmq)
 	storage := plugins.NewPluginStorage()
 	requestData := []byte(`{"test": "test"}`)
 	subscrService := subscribe.NewSubscribeService(storage)

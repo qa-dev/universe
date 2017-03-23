@@ -7,7 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
 	"github.com/qa-dev/universe/plugins"
-	"github.com/qa-dev/universe/queue"
+	"github.com/qa-dev/universe/rabbitmq"
 )
 
 type ClientInterface interface {
@@ -15,11 +15,11 @@ type ClientInterface interface {
 }
 
 type Dispatcher struct {
-	queue         *queue.Queue
+	queue         *rabbitmq.RabbitMQ
 	pluginStorage *plugins.PluginStorage
 }
 
-func NewDispatcher(queue *queue.Queue, storage *plugins.PluginStorage) *Dispatcher {
+func NewDispatcher(queue *rabbitmq.RabbitMQ, storage *plugins.PluginStorage) *Dispatcher {
 	return &Dispatcher{queue, storage}
 }
 

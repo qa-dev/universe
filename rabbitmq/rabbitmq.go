@@ -135,9 +135,9 @@ func (r *RabbitMQ) IsOnline() bool {
 	return r.isOnline
 }
 
-func (r *RabbitMQ) SendEvent(event interface{}) {
+func (r *RabbitMQ) Publish(msg interface{}) {
 	go func() {
-		r.buffer <- event
+		r.buffer <- msg
 	}()
 }
 
@@ -148,11 +148,11 @@ func (r *RabbitMQ) runBufferWorker() {
 		for r.IsOnline() == false {
 			time.Sleep(500 * time.Millisecond)
 		}
-		r.sendEventToRabbit(ev, 1)
+		r.publishToExchange(ev, 1)
 	}
 }
 
-func (r *RabbitMQ) sendEventToRabbit(msg interface{}, priority uint8) error {
+func (r *RabbitMQ) publishToExchange(msg interface{}, priority uint8) error {
 	body, err := json.Marshal(msg)
 	if err != nil {
 		return err
