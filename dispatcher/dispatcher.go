@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"encoding/json"
 	"net/http"
+	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
@@ -24,11 +25,14 @@ func NewDispatcher(queue *rabbitmq.RabbitMQ, storage *plugins.PluginStorage) *Di
 }
 
 func (d *Dispatcher) Run() {
-	go d.worker()
+	for cnt := 1; cnt <= runtime.NumCPU(); cnt++ {
+		log.Infof("Run worker %d", cnt)
+		go d.worker(cnt)
+	}
 }
 
-func (d *Dispatcher) worker() {
-	msgs, err := d.queue.GetConsumer("consumer")
+func (d *Dispatcher) worker(num int) {
+	msgs, err := d.queue.GetConsumer("consumer" + string(num))
 	if err != nil {
 		log.Error("Error get consumer in event dispatcher worker")
 	}
