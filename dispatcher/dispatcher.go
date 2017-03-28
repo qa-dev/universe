@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"encoding/json"
 	"net/http"
+	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/qa-dev/universe/event"
@@ -24,33 +25,37 @@ func NewDispatcher(queue *rabbitmq.RabbitMQ, storage *plugins.PluginStorage) *Di
 }
 
 func (d *Dispatcher) Run() {
-	go d.worker()
+	for cnt := 1; cnt <= runtime.NumCPU(); cnt++ {
+		log.Infof("Run worker %d", cnt)
+		go d.worker(cnt)
+	}
 }
 
-func (d *Dispatcher) worker() {
-	msgs, err := d.queue.GetConsumer("consumer")
+func (d *Dispatcher) worker(num int) {
+	consumerName := "consumer" + string(num)
+	msgs, err := d.queue.GetConsumer(consumerName)
 	if err != nil {
-		log.Error("Error get consumer in event dispatcher worker")
+		log.Errorf("Error get consumer in event dispatcher worker %d", num)
 	}
 	for {
 		if d.queue.IsOnline() == false {
-			log.Info("Worker lost connection to queue. Waiting...")
+			log.Infof("Worker %d lost connection to queue. Waiting...", num)
 			backOnlineChan := make(chan bool)
 			d.queue.NotifyReconnect(backOnlineChan)
 			_ = <-backOnlineChan
-			newMsgs, err := d.queue.GetConsumer("consumer")
+			newMsgs, err := d.queue.GetConsumer(consumerName)
 			if err != nil {
-				log.Error("Error get consumer in event dispatcher worker")
+				log.Errorf("Error get consumer in event dispatcher worker %d", num)
 			}
 			msgs = newMsgs
-			log.Info("Worker established connection to queue")
+			log.Infof("Worker %d established connection to queue", num)
 		}
 		data := <-msgs
 		var ev event.Event
 		err = json.Unmarshal(data.Body(), &ev)
 		if err != nil {
 			data.Reject()
-			log.Error("Error unmarchal event in event dispatcher worker")
+			log.Errorf("Error unmarshal event in event dispatcher worker %d", num)
 			continue
 		}
 		d.pluginStorage.ProcessEvent(&ev)
