@@ -38,6 +38,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	msession.SetSyncTimeout(5 * time.Second)
 
 	kpr := keeper.NewKeeper(msession)
 
